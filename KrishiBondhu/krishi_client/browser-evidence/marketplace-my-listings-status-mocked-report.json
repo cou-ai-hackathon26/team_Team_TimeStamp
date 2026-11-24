@@ -1,0 +1,51 @@
+{
+  "statusTransitions": {
+    "activeToSold": true,
+    "soldToActive": true
+  },
+  "error": {
+    "shown": true,
+    "failedStatePreserved": true
+  },
+  "archive": {
+    "dialogVisible": true,
+    "initialFocusOnCancel": true,
+    "escapeCancelsWithoutDelete": true,
+    "cancelButtonSendsNoDelete": true,
+    "successUpdatesToArchived": true,
+    "archivedActions": 0
+  },
+  "requestPayloads": [
+    {
+      "method": "PATCH",
+      "body": "{\"status\":\"sold_out\"}"
+    },
+    {
+      "method": "PATCH",
+      "body": "{\"status\":\"active\"}"
+    },
+    {
+      "method": "PATCH",
+      "body": "{\"status\":\"active\"}"
+    },
+    {
+      "method": "DELETE",
+      "body": null
+    }
+  ],
+  "languageButtons": [
+    "Search pages and features...",
+    "",
+    "EN",
+    "বাং",
+    "",
+    "UUser",
+    "",
+    "Edit price & quantity",
+    "Make available again",
+    "Archive listing",
+    "Previous",
+    "Next",
+    ""
+  ]
+}

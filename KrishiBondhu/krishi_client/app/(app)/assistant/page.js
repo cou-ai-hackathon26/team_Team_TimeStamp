@@ -1,0 +1,1179 @@
+"use client";
+import { PrivateAccess } from "@/components/auth/PrivateAccess.js";
+import { AssistantLoadingState } from "@/components/assistant/AssistantLoadingState.js";
+import { BRAND_LOGO_SRC } from "@/lib/branding.js";
+import { isMascotVoiceMuted } from "@/components/mascot/mascotStore.js";
+
+import { useCallback, useEffect, useRef, useState, Suspense } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  AlertCircle,
+  Bookmark,
+  Bot,
+  Calendar,
+  Check,
+  ChevronDown,
+  Copy,
+  Info,
+  MapPin,
+  MessageCircle,
+  Mic,
+  MicOff,
+  Moon,
+  Pause,
+  Play,
+  Plus,
+  Send,
+  Sparkles,
+  Square,
+  Sun,
+  Tractor,
+  Trash2,
+  User,
+  Volume2,
+  X,
+} from "lucide-react";
+
+import { useAuth } from "@/contexts/AuthContext.js";
+import { useLocation } from "@/contexts/LocationContext.js";
+import { useTheme } from "@/contexts/ThemeContext.js";
+import { useVoiceInput } from "@/hooks/useVoiceInput.js";
+import { useVoiceOutput } from "@/hooks/useVoiceOutput.js";
+import { useLang } from "@/lib/i18n/LanguageContext.js";
+import {
+  sendAssistantMessage,
+  fetchAssistantConversation,
+  deleteAssistantConversation,
+  fetchFarms,
+  createSavedAdvisory,
+} from "@/services/api.js";
+
+const CROPS = [
+  { id: "monsoon_aman", nameEn: "T. Aman Rice", nameBn: "রোপা আমন ধান" },
+  { id: "boro_rice", nameEn: "Boro Rice", nameBn: "বোরো ধান" },
+  { id: "aus_rice", nameEn: "Aus Rice", nameBn: "আউশ ধান" },
+  { id: "mustard", nameEn: "Mustard", nameBn: "সরিষা" },
+];
+
+function AssistantContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlConversationId = searchParams.get("id");
+  const urlFarmId = searchParams.get("farmId");
+
+  const { locale, t } = useLang();
+  const { theme } = useTheme();
+  const { user, isAuthenticated } = useAuth();
+  const { selectedDistrict, setSelectedDistrict, districts } = useLocation();
+  const userKey = user?._id || user?.id || null;
+
+  const isBn = locale === "bn";
+  const isDark = theme === "dark";
+
+  const [selectedCrop, setSelectedCrop] = useState(CROPS[0].id);
+  const [farmLoadResult, setFarmLoadResult] = useState(null);
+  const [farmReloadCount, setFarmReloadCount] = useState(0);
+  const farmRequestKey = `${userKey || "guest"}:${farmReloadCount}`;
+  const loadedFarmUserRef = useRef(user?._id || user?.id || null);
+  const [farmSelection, setFarmSelection] = useState({ queryFarmId: urlFarmId, farmId: urlFarmId || "" });
+  const selectedFarmId = farmSelection.queryFarmId === urlFarmId
+    ? farmSelection.farmId
+    : urlFarmId || "";
+  const [messages, setMessages] = useState([]);
+  const [inputValue, setInputValue] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [conversationId, setConversationId] = useState(null);
+  const [conversationTitle, setConversationTitle] = useState("");
+  const [isGuestSession, setIsGuestSession] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
+  const [failedPrompt, setFailedPrompt] = useState("");
+  const [advisorySaveState, setAdvisorySaveState] = useState({});
+
+  const handleCopyMessage = (msgId, text) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedId(msgId);
+      setTimeout(() => setCopiedId(null), 2000);
+    }
+  };
+
+  const handleSaveAssistantReply = async (msg) => {
+    if (!isAuthenticated) {
+      router.push("/login?redirect=%2Fassistant");
+      return;
+    }
+    if (advisorySaveState[msg.id] === "saving" || advisorySaveState[msg.id] === "saved") return;
+    setAdvisorySaveState((current) => ({ ...current, [msg.id]: "saving" }));
+    try {
+      const selectedCropInfo = CROPS.find((crop) => crop.id === selectedCrop);
+      const result = await createSavedAdvisory({
+        title: `${isBn ? "সহকারীর পরামর্শ" : "Assistant advice"} · ${selectedCropInfo?.[isBn ? "nameBn" : "nameEn"] || "KrishiBondhu"}`.slice(0, 180),
+        body: String(msg.text || "").trim().slice(0, 5000),
+        category: "assistant",
+        cropCode: selectedCrop || "",
+        cropName: selectedCropInfo?.nameEn || "",
+        districtCode: ["cumilla", "chattogram"].includes(selectedDistrict) ? selectedDistrict : "",
+        sourceHref: "/assistant",
+      });
+      setAdvisorySaveState((current) => ({ ...current, [msg.id]: result.success ? "saved" : "error" }));
+    } catch {
+      setAdvisorySaveState((current) => ({ ...current, [msg.id]: "error" }));
+    }
+  };
+
+  const handleFarmSelection = (farmId) => {
+    const nextFarmId = farmId || "";
+    if (nextFarmId === selectedFarmId) return;
+    // Farm context is fixed for a saved conversation. Start a fresh thread when switching.
+    handleNewConversation(nextFarmId);
+    setFarmSelection({ queryFarmId: urlFarmId, farmId });
+    const selectedFarm = farmsList.find((farm) => farm._id === farmId);
+    if (selectedFarm?.location?.districtCode) {
+      setSelectedDistrict(selectedFarm.location.districtCode);
+    }
+    if (selectedFarm?.crop?.cropCode) {
+      setSelectedCrop(selectedFarm.crop.cropCode);
+    }
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+    if (loadedFarmUserRef.current !== userKey) {
+      loadedFarmUserRef.current = userKey;
+      setFarmSelection({ queryFarmId: urlFarmId, farmId: urlFarmId || "" });
+    }
+    if (!isAuthenticated) {
+      return () => { isMounted = false; };
+    }
+    async function loadFarms() {
+      try {
+        const res = await fetchFarms();
+        if (!isMounted) return;
+        if (res.success && Array.isArray(res.data?.farms)) {
+          setFarmLoadResult({ requestKey: farmRequestKey, farms: res.data.farms, error: false });
+          const queryFarm = res.data.farms.find((farm) => farm._id === urlFarmId);
+          if (urlFarmId && !queryFarm) {
+            setFarmSelection({ queryFarmId: urlFarmId, farmId: "" });
+            router.replace("/assistant");
+          }
+          if (queryFarm?.location?.districtCode) {
+            setSelectedDistrict(queryFarm.location.districtCode);
+          }
+          if (queryFarm?.crop?.cropCode) {
+            setSelectedCrop(queryFarm.crop.cropCode);
+          }
+        } else {
+          setFarmLoadResult({ requestKey: farmRequestKey, farms: [], error: true });
+        }
+      } catch (err) {
+        if (!isMounted) return;
+        setFarmLoadResult({ requestKey: farmRequestKey, farms: [], error: true });
+        console.error("Failed to load user fields:", err);
+      }
+    }
+    loadFarms();
+    return () => { isMounted = false; };
+  }, [isAuthenticated, userKey, urlFarmId, farmRequestKey, router, setSelectedDistrict]);
+
+  const farmResultIsCurrent = farmLoadResult?.requestKey === farmRequestKey;
+  const farmsList = isAuthenticated && farmResultIsCurrent ? farmLoadResult.farms : [];
+  const farmsLoadError = isAuthenticated && farmResultIsCurrent && farmLoadResult.error;
+  const isFarmsLoading = isAuthenticated && !farmResultIsCurrent;
+
+  const activeFarm = farmsList.find((f) => f._id === selectedFarmId) || null;
+
+  const messagesEndRef = useRef(null);
+  const chatScrollContainerRef = useRef(null);
+  const loadedConvIdRef = useRef(null);
+  const textareaRef = useRef(null);
+  const voiceBaseInputRef = useRef("");
+  const voiceQuestionPendingRef = useRef(false);
+  const sendInFlightRef = useRef(false);
+  const conversationStateRef = useRef({ conversationId, isGuestSession });
+  useEffect(() => {
+    conversationStateRef.current = { conversationId, isGuestSession };
+  }, [conversationId, isGuestSession]);
+
+  // Voice Input (STT) Hook
+  const handleFinalTranscript = useCallback((finalText) => {
+    if (!finalText) return;
+    const base = voiceBaseInputRef.current.trim();
+    // Replace the live interim preview with the final transcript, so the same
+    // recognized words are not appended twice when the browser stops listening.
+    setInputValue([base, finalText.trim()].filter(Boolean).join(" "));
+    voiceQuestionPendingRef.current = true;
+    setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 50);
+  }, [setInputValue]);
+
+  const handleLiveTranscript = useCallback((transcript) => {
+    if (!transcript) return;
+    const base = voiceBaseInputRef.current.trim();
+    setInputValue([base, transcript.trim()].filter(Boolean).join(" "));
+  }, [setInputValue]);
+
+  const {
+    isSupported: isVoiceSupported,
+    isListening,
+    isTranscribing,
+    interimTranscript,
+    errorCode: voiceErrorCode,
+    errorDetails: voiceErrorDetails,
+    startListening,
+    stopListening,
+    clearError: clearVoiceError,
+  } = useVoiceInput({
+    onFinalTranscript: handleFinalTranscript,
+    onInterimTranscript: handleLiveTranscript,
+    uiLanguage: isBn ? "bn" : "en",
+  });
+
+  // Voice Output (TTS) Hook
+  const {
+    isSupported: isTtsSupported,
+    isSpeaking: isTtsSpeaking,
+    isPaused: isTtsPaused,
+    currentId: ttsCurrentId,
+    error: ttsError,
+    errorDetails: ttsErrorDetails,
+    speak: speakTts,
+    pause: pauseTts,
+    resume: resumeTts,
+    stop: stopTts,
+    clearError: clearTtsError,
+  } = useVoiceOutput();
+
+  const [ttsTargetId, setTtsTargetId] = useState(null);
+
+  useEffect(() => {
+    const onMuteChange = (event) => { if (event.detail?.muted) stopTts(); };
+    window.addEventListener("krishi:voice-muted", onMuteChange);
+    return () => window.removeEventListener("krishi:voice-muted", onMuteChange);
+  }, [stopTts]);
+
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    const state = isListening
+      ? "listening"
+      : isTtsSpeaking
+          ? "talking"
+          : isLoading
+            ? "thinking"
+          : error
+            ? "concerned"
+            : lastMessage?.sender === "assistant" ? "happy" : "idle";
+    window.dispatchEvent(new CustomEvent("krishi:assistant-status", { detail: { state } }));
+  }, [error, isListening, isLoading, isTtsSpeaking, messages]);
+
+  useEffect(() => () => {
+    window.dispatchEvent(new CustomEvent("krishi:assistant-status", { detail: { state: "idle" } }));
+  }, []);
+
+  const handleSpeakMessage = (msg) => {
+    if (isMascotVoiceMuted()) return;
+    setTtsTargetId(msg.id);
+    // Speak in the language of this answer, regardless of the app's UI language.
+    speakTts(msg.text, { id: msg.id });
+  };
+
+  const cleanAssistantText = (value) => String(value || "")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/\*\*(.*?)\*\*/gs, "$1")
+    .replace(/__(.*?)__/gs, "$1")
+    .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1$2")
+    .replace(/(^|[^_])_([^_\n]+)_(?!_)/g, "$1$2")
+    .replace(/\*{2,}|_{2,}/g, "")
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+    .replace(/^\s*[-*•]\s+/gm, "• ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  // Smooth contained scrolling without window jumping
+  const scrollToBottom = useCallback((smooth = true) => {
+    const container = chatScrollContainerRef.current;
+    if (!container) return;
+    requestAnimationFrame(() => {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: smooth ? "smooth" : "auto",
+      });
+    });
+  }, []);
+
+  const messagesCount = messages.length;
+  useEffect(() => {
+    if (messagesCount > 0 || isLoading) {
+      scrollToBottom(true);
+    }
+  }, [messagesCount, isLoading, scrollToBottom]);
+
+  // Load existing conversation when URL id changes
+  useEffect(() => {
+    let isMounted = true;
+    if (!urlConversationId) {
+      const previousState = conversationStateRef.current;
+      if (previousState.conversationId && !previousState.isGuestSession) {
+        Promise.resolve().then(() => {
+          if (!isMounted) return;
+          setConversationId(null);
+          setConversationTitle("");
+          setMessages([]);
+        });
+      }
+      loadedConvIdRef.current = null;
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    // Skip redundant network fetch if this conversation is already active in memory
+    if (
+      loadedConvIdRef.current === urlConversationId ||
+      (conversationStateRef.current.conversationId === urlConversationId && messagesCount > 0)
+    ) {
+      loadedConvIdRef.current = urlConversationId;
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    async function loadSavedConversation() {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const res = await fetchAssistantConversation(urlConversationId);
+        if (!isMounted) return;
+
+        if (res.success && res.data?.conversation) {
+          const conv = res.data.conversation;
+          loadedConvIdRef.current = conv._id;
+          setConversationId(conv._id);
+          setConversationTitle(conv.title || "");
+          setFailedPrompt("");
+          const savedFarmId = conv.farmId?.toString?.() || conv.farmId || "";
+          setFarmSelection({ queryFarmId: urlFarmId, farmId: savedFarmId });
+          const savedFarm = farmsList.find((farm) => farm._id === savedFarmId);
+          if (savedFarm?.location?.districtCode) setSelectedDistrict(savedFarm.location.districtCode);
+          else if (conv.district) setSelectedDistrict(conv.district);
+          if (savedFarm?.crop?.cropCode) setSelectedCrop(savedFarm.crop.cropCode);
+          else if (conv.crop) setSelectedCrop(conv.crop);
+
+          const formattedMessages = (conv.messages || []).map((m) => ({
+            id: m._id || `msg-${Math.random()}`,
+            sender: m.role,
+            text: m.role === "assistant" ? cleanAssistantText(m.content) : m.content,
+            sources: m.sources || [],
+            dataDate: m.dataDate || null,
+            observationDate: m.observationDate || null,
+            observationLocation: m.observationLocation || null,
+            dataQuality: m.dataQuality || null,
+            provenance: m.provenance || [],
+            limitations: m.limitations || [],
+            timestamp: m.timestamp
+              ? new Date(m.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+              : new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          }));
+
+          setMessages(formattedMessages);
+        } else {
+          setError(
+            res.error?.message ||
+              (isBn ? "আলোচনাটি লোড করা যায়নি।" : "Failed to load conversation.")
+          );
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err.message || "Failed to load conversation");
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    Promise.resolve().then(() => {
+      if (isMounted) loadSavedConversation();
+    });
+
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlConversationId]);
+
+  // Handle New Conversation
+  const handleNewConversation = useCallback((requestedFarmId) => {
+    const preserveFarmId = requestedFarmId || "";
+    stopTts();
+    if (isListening) stopListening();
+    loadedConvIdRef.current = null;
+    setConversationId(null);
+    setConversationTitle("");
+    setMessages([]);
+    voiceQuestionPendingRef.current = false;
+    setError(null);
+    setFailedPrompt("");
+    setIsGuestSession(false);
+    router.replace(preserveFarmId
+      ? `/assistant?farmId=${encodeURIComponent(preserveFarmId)}`
+      : "/assistant");
+    setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 100);
+  }, [stopTts, isListening, stopListening, router, setConversationId, setConversationTitle, setMessages, setError, setFailedPrompt, setIsGuestSession]);
+
+  // Listen for global custom events from Sidebar
+  useEffect(() => {
+    const handleGlobalNewChat = () => handleNewConversation(selectedFarmId);
+    const handleGlobalChatDeleted = (e) => {
+      if (e.detail?.id === conversationId) {
+        handleNewConversation(selectedFarmId);
+      }
+    };
+
+    window.addEventListener("krishi:new-chat", handleGlobalNewChat);
+    window.addEventListener("krishi:chat-deleted", handleGlobalChatDeleted);
+
+    return () => {
+      window.removeEventListener("krishi:new-chat", handleGlobalNewChat);
+      window.removeEventListener("krishi:chat-deleted", handleGlobalChatDeleted);
+    };
+  }, [handleNewConversation, conversationId, selectedFarmId]);
+
+  // Send message handler
+  const handleSendMessage = useCallback(
+    async (textOverride = null, { retry = false } = {}) => {
+      const textToSend = typeof textOverride === "string" ? textOverride : inputValue;
+      if (!textToSend || !textToSend.trim() || isLoading || sendInFlightRef.current) return;
+
+      if (!retry) {
+        const query = textToSend.trim().toLocaleLowerCase();
+        const destination = /বাজার|দাম|market|price/.test(query)
+          ? "/market"
+          : /আবহাওয়া|আবহাওয়া|weather|rainfall|climate/.test(query)
+            ? "/climate"
+            : /ফসল.*(পরিকল্পনা|পালাবদল)|crop.*(plan|rotation)/.test(query)
+              ? "/crop-rotation"
+              : null;
+        const wantsTour = /ঘুরে দেখ|পরিচিতি|গাইডেড টুর|guided tour|show me around|how.*(use|work).*website|ওয়েবসাইট.*(ব্যবহার|চালাব)/.test(query);
+        if (wantsTour) {
+          voiceQuestionPendingRef.current = false;
+          setInputValue("");
+          window.dispatchEvent(new CustomEvent("krishi:tour-start", { detail: { restart: true } }));
+          return;
+        }
+        if (destination) {
+          voiceQuestionPendingRef.current = false;
+          setInputValue("");
+          router.push(destination);
+          return;
+        }
+      }
+
+      sendInFlightRef.current = true;
+
+      if (isListening) stopListening();
+      stopTts();
+
+      const userText = textToSend.trim();
+      if (!retry) {
+        const userMessage = {
+          id: `user-${Date.now()}`,
+          sender: "user",
+          text: userText,
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        };
+        setMessages((prev) => [...prev, userMessage]);
+        setInputValue("");
+      }
+      setIsLoading(true);
+      setError(null);
+      setFailedPrompt("");
+
+      try {
+        const res = await sendAssistantMessage({
+          message: userText,
+          district: selectedDistrict,
+          crop: selectedCrop,
+          farmId: selectedFarmId || null,
+          conversationId,
+        });
+
+        if (!res.success) {
+          throw new Error(res.error?.message || "Failed to get AI response");
+        }
+
+        const data = res.data;
+        if (data.conversationId) {
+          setConversationId(data.conversationId);
+          loadedConvIdRef.current = data.conversationId;
+          if (data.title && !conversationTitle) {
+            setConversationTitle(data.title);
+          }
+          if (isAuthenticated && !urlConversationId) {
+            const farmQuery = selectedFarmId ? `&farmId=${encodeURIComponent(selectedFarmId)}` : "";
+            window.history.replaceState(null, "", `/assistant?id=${data.conversationId}${farmQuery}`);
+            window.dispatchEvent(new CustomEvent("krishi:chat-updated"));
+          }
+        }
+
+        if (data.isGuest) {
+          setIsGuestSession(true);
+        }
+
+        const assistantMessage = {
+          id: `assistant-${Date.now()}`,
+          sender: "assistant",
+          text: cleanAssistantText(data.answer),
+          sources: data.sources || [],
+          dataDate: data.dataDate || null,
+          observationDate: data.observationDate || null,
+          observationLocation: data.observationLocation || null,
+          dataQuality: data.dataQuality || null,
+          provenance: data.provenance || [],
+          limitations: data.limitations || [],
+          conversationId: data.conversationId,
+          isGuest: data.isGuest,
+          guestNotice: data.guestNotice,
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        };
+
+        setMessages((prev) => [...prev, assistantMessage]);
+        if (voiceQuestionPendingRef.current) {
+          voiceQuestionPendingRef.current = false;
+          setTtsTargetId(assistantMessage.id);
+          if (!isMascotVoiceMuted()) speakTts(assistantMessage.text, { id: assistantMessage.id });
+        }
+        setFailedPrompt("");
+      } catch (err) {
+        console.error("[AssistantPage] Send failed:", err);
+        setFailedPrompt(userText);
+        setError(
+          err.message ||
+            (isBn
+              ? "বার্তা পাঠাতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।"
+              : "An error occurred while sending message. Please try again.")
+        );
+      } finally {
+        sendInFlightRef.current = false;
+        setIsLoading(false);
+      }
+    },
+    [
+      inputValue,
+      isLoading,
+      selectedDistrict,
+      selectedCrop,
+      selectedFarmId,
+      conversationId,
+      conversationTitle,
+      isAuthenticated,
+      urlConversationId,
+      isBn,
+      isListening,
+      stopListening,
+      stopTts,
+      speakTts,
+      router,
+      setMessages,
+      setInputValue,
+      setIsLoading,
+      setError,
+      setFailedPrompt,
+      setConversationId,
+      setConversationTitle,
+      setIsGuestSession,
+    ]
+  );
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  // District display label
+  const districtLabel = selectedDistrict === "chattogram" ? "Chattogram" : "Cumilla";
+  const districtLabelBn = selectedDistrict === "chattogram" ? "চট্টগ্রাম" : "কুমিল্লা";
+
+  return (
+    <div className="mx-auto flex h-[calc(100dvh-13.5rem)] min-h-[28rem] w-full max-w-[1320px] flex-col overflow-hidden lg:h-[calc(100dvh-7.75rem)] lg:min-h-0">
+      {/* Main Grid: Left Chat Area & Right Sidebar */}
+      <div className="flex-1 min-h-0 flex flex-col w-full overflow-hidden">
+        {/* Left Column: Full-Height Chat Area with Contained Scroll */}
+        <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-surface via-surface to-sky-50/40 shadow-sm transition-colors duration-200 dark:to-sky-950/10">
+          <header className="flex shrink-0 flex-col gap-1.5 border-b border-line bg-gradient-to-r from-emerald-50/80 via-surface to-lime-50/60 px-4 py-1.5 dark:from-emerald-950/30 dark:via-surface dark:to-lime-950/20 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-1.5">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-100 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-900/60 dark:text-emerald-200">
+                <MessageCircle className="h-4 w-4" aria-hidden="true" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
+                  <h1 data-tour-target="assistant.overview" className="text-base font-semibold tracking-tight text-content sm:text-lg">{t("assistant.title")}</h1>
+                  <div className="inline-flex max-w-full items-center gap-1 rounded-full border border-line bg-surface/80 px-2 py-0.5 text-[11px] leading-4 text-content-muted">
+                    <MapPin className="h-3 w-3 shrink-0 text-emerald" aria-hidden="true" />
+                    <span>{t("assistant.contextLabel")}</span>
+                    <span className="font-semibold text-content">{isBn ? districtLabelBn : districtLabel}</span>
+                    {activeFarm ? <span className="hidden max-w-48 truncate border-l border-line pl-1.5 sm:inline">{activeFarm.farmName}</span> : null}
+                  </div>
+                </div>
+                <p className="mt-0 max-w-2xl truncate text-xs leading-4 text-muted">{t("assistant.headerDescription")}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleNewConversation(selectedFarmId)}
+              className="inline-flex min-h-8 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-forest px-3 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-forest/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald focus-visible:ring-offset-2 sm:w-auto"
+              aria-label={t("assistant.newChat")}
+            >
+              <Plus className="h-4 w-4" />
+              <span>{t("assistant.newChat")}</span>
+            </button>
+          </header>
+          {/* Farm-Aware Context Banner */}
+          {activeFarm ? (
+            <div className="shrink-0 p-3 sm:p-4 pb-0">
+              <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/10 dark:bg-emerald-950/30 p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                    <Tractor className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-bold text-content truncate">{activeFarm.farmName}</span>
+                      <span className="rounded-md bg-emerald-600/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-800 dark:text-emerald-300">
+                        {activeFarm.crop?.cropName || activeFarm.crop?.cropCode}
+                      </span>
+                      {activeFarm.crop?.variety ? (
+                        <span className="text-[11px] text-content-muted">({activeFarm.crop.variety})</span>
+                      ) : null}
+                    </div>
+                    <p className="text-[11px] text-content-muted mt-0.5 truncate">
+                      {activeFarm.location?.upazila}, {activeFarm.location?.district} • {isBn ? "প্রশ্নগুলো এই মাঠের বাস্তব উপাত্তের ভিত্তিতে উত্তর দেওয়া হবে" : "AI will answer grounded in this field's records"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleFarmSelection("")}
+                  className="text-xs text-emerald-700 dark:text-emerald-300 hover:underline shrink-0 font-medium cursor-pointer"
+                >
+                  {isBn ? "ফিল্টার সরান" : "Clear Filter"}
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {/* Scrollable Chat / Empty State Container */}
+          <div
+            ref={chatScrollContainerRef}
+            className="flex-1 min-h-0 overflow-y-auto overscroll-contain km-smooth-scroll scroll-smooth p-3 sm:p-4 lg:p-4 space-y-3"
+            aria-live="polite"
+            aria-relevant="additions text"
+          >
+            {messages.length === 0 ? (
+              /* EMPTY STATE: Clean SaaS Hero Card + Try Asking About */
+              <div className="flex flex-col gap-3">
+                {/* Hero Card with Crisp Brand Typography & Badges */}
+                <div className="relative flex min-h-24 items-center gap-4 overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-r from-lime-100 via-emerald-50 to-sky-100 p-4 shadow-sm dark:border-emerald-900 dark:from-lime-950/30 dark:via-emerald-950/30 dark:to-sky-950/30 sm:gap-5 sm:p-5">
+                  <div className="relative z-10 flex min-w-0 items-center gap-4 sm:gap-5">
+                    {/* Logo Emblem */}
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-surface border border-line shadow-xs sm:h-14 sm:w-14">
+                      <Image
+                        src={BRAND_LOGO_SRC}
+                        alt="KrishiBondhu Logo"
+                        width={44}
+                        height={44}
+                        unoptimized
+                        className="h-10 w-10 object-contain brightness-110 saturate-125 sm:h-12 sm:w-12"
+                      />
+                    </div>
+
+                    <div className="min-w-0 text-left">
+                      <h2 className="text-lg font-bold tracking-tight text-content sm:text-xl">
+                        {t("assistant.homePrompt")}
+                      </h2>
+                      <p className="mt-0.5 text-sm font-medium leading-5 text-muted">
+                        {t("assistant.homePromptSubtitle")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            ) : (
+              /* ACTIVE CHAT: Message Bubbles */
+              <div className="space-y-3">
+                {messages.map((msg) => {
+                  const isUser = msg.sender === "user";
+
+                  return (
+                    <div
+                      key={msg.id}
+                      className={`flex gap-3 max-w-[92%] lg:max-w-[85%] ${isUser ? "ml-auto justify-end" : "mr-auto justify-start"}`}
+                    >
+                      {!isUser && (
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald border border-emerald-200 dark:border-emerald-800 mt-1 shadow-2xs">
+                          <Bot className="h-4 w-4" />
+                        </div>
+                      )}
+
+                      <div
+                        className={`min-w-0 max-w-full flex flex-col rounded-2xl px-5 py-4 text-sm leading-7 sm:px-6 ${
+                          isUser
+                            ? "bg-forest text-white rounded-tr-md shadow-xs"
+                            : "bg-emerald-50/70 border border-emerald-100 text-content rounded-tl-md shadow-xs dark:bg-emerald-950/20 dark:border-emerald-900"
+                        }`}
+                      >
+                        {/* Assistant Message Header / TTS Controls */}
+                        {!isUser && (
+                          <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-line/40">
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald">
+                              <Bot className="h-3.5 w-3.5" />
+                              <span>{isBn ? "কৃষিবন্ধু পরামর্শ" : "KrishiBondhu Advisory"}</span>
+                            </div>
+
+                            {/* TTS Controls */}
+                            <div className="flex items-center gap-1">
+                              {ttsCurrentId === msg.id && (isTtsSpeaking || isTtsPaused) ? (
+                                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-emerald/10 border border-emerald/20 text-xs">
+                                  <button
+                                    type="button"
+                                    onClick={isTtsPaused ? resumeTts : pauseTts}
+                                    title={isTtsPaused ? t("assistant.ttsResume") : t("assistant.ttsPause")}
+                                    aria-label={isTtsPaused ? t("assistant.ttsResume") : t("assistant.ttsPause")}
+                                    className="p-1 rounded text-emerald hover:bg-emerald/20 transition-colors cursor-pointer"
+                                  >
+                                    {isTtsPaused ? (
+                                      <Play className="h-3 w-3 fill-current" />
+                                    ) : (
+                                      <Pause className="h-3 w-3 fill-current" />
+                                    )}
+                                  </button>
+                                  <span className="text-[11px] font-medium text-emerald">
+                                    {isTtsPaused ? t("assistant.ttsPaused") : t("assistant.ttsPlaying")}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={stopTts}
+                                    title={t("assistant.ttsStop")}
+                                    aria-label={t("assistant.ttsStop")}
+                                    className="p-1 rounded text-muted hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                                  >
+                                    <Square className="h-3 w-3 fill-current" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleSpeakMessage(msg)}
+                                  disabled={!isTtsSupported}
+                                  title={!isTtsSupported ? t("assistant.ttsUnsupported") : t("assistant.ttsListen")}
+                                  aria-label={t("assistant.ttsListen")}
+                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium transition-all ${
+                                    !isTtsSupported
+                                      ? "text-muted opacity-40 cursor-not-allowed"
+                                      : "text-muted hover:text-emerald hover:bg-surface-hover cursor-pointer"
+                                  }`}
+                                >
+                                  <Volume2 className="h-3.5 w-3.5" />
+                                  <span>{t("assistant.ttsListen")}</span>
+                                </button>
+                              )}
+
+                              {/* Copy response button */}
+                              <button
+                                type="button"
+                                onClick={() => handleCopyMessage(msg.id, msg.text)}
+                                title={copiedId === msg.id ? (isBn ? "কপি হয়েছে" : "Copied!") : (isBn ? "কপি করুন" : "Copy text")}
+                                aria-label={copiedId === msg.id ? "Copied" : "Copy text"}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium text-muted hover:text-emerald hover:bg-surface-hover transition-colors cursor-pointer"
+                              >
+                                {copiedId === msg.id ? (
+                                  <>
+                                    <Check className="h-3 w-3 text-emerald" />
+                                    <span>{isBn ? "কপি হয়েছে" : "Copied"}</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="h-3 w-3" />
+                                    <span>{isBn ? "কপি" : "Copy"}</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* TTS Error Alert */}
+                        {!isUser && ttsError && ttsTargetId === msg.id && (
+                          <div className="mb-2 p-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 text-[11px] text-amber-800 dark:text-amber-300 flex items-start gap-1.5">
+                            <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                            <div className="flex-1">
+                              {ttsError === "VOICE_UNAVAILABLE_BN"
+                                ? t("assistant.ttsVoiceUnavailableBn")
+                                : ttsError === "VOICE_UNAVAILABLE_EN"
+                                ? t("assistant.ttsVoiceUnavailableEn")
+                                : t("assistant.ttsError")}
+                              <div className="mt-1 flex items-center gap-2">
+                                <span className="opacity-80">{isBn ? "আবার চেষ্টা করুন বা ডিভাইসের অডিও সেটিংস দেখুন।" : "Try again or check your device audio settings."}</span>
+                                <button type="button" onClick={() => handleSpeakMessage(msg)} className="font-semibold underline underline-offset-2 hover:no-underline">
+                                  {isBn ? "আবার চালান" : "Retry"}
+                                </button>
+                                {ttsErrorDetails && <span className="sr-only">{ttsErrorDetails}</span>}
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={clearTtsError}
+                              className="p-0.5 rounded text-muted hover:text-content hover:bg-amber-200/50 cursor-pointer"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Message Text */}
+                        <div className="whitespace-pre-line text-sm leading-relaxed [overflow-wrap:anywhere]">{msg.text}</div>
+                        {!isUser && (
+                          <div className="mt-3 flex justify-end">
+                            <button type="button" disabled={advisorySaveState[msg.id] === "saving" || advisorySaveState[msg.id] === "saved"} onClick={() => handleSaveAssistantReply(msg)} aria-live="polite" className="inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-forest-300 bg-surface px-2.5 py-1 text-xs font-semibold text-forest-800 transition hover:bg-surface-2 disabled:cursor-default disabled:opacity-70 dark:border-forest-700 dark:text-forest-200">
+                              {advisorySaveState[msg.id] === "saved" ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : <Bookmark className="h-3.5 w-3.5" aria-hidden="true" />}
+                              {advisorySaveState[msg.id] === "saved" ? t("assistant.advisorySaved") : advisorySaveState[msg.id] === "error" ? t("assistant.advisorySaveFailed") : !isAuthenticated ? t("assistant.signInToSave") : t("assistant.saveAdvisory")}
+                            </button>
+                          </div>
+                        )}
+                        {/* Metadata Footer */}
+                        {!isUser && (msg.observationDate || msg.observationLocation) && (
+                          <div className="mt-3 pt-2.5 border-t border-line/60">
+                            <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted">
+                              {msg.observationDate && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-hover border border-line">
+                                  <Calendar className="h-3 w-3 text-emerald" />
+                                  <span>{isBn ? "পর্যবেক্ষণ" : "Observed"}: {msg.observationDate}</span>
+                                </span>
+                              )}
+
+                              {msg.observationLocation && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-hover border border-line">
+                                  <MapPin className="h-3 w-3 text-emerald" />
+                                  <span>{msg.observationLocation}</span>
+                                </span>
+                              )}
+
+                            </div>
+                          </div>
+                        )}
+
+                        <div className={`text-[10px] mt-1.5 ${isUser ? "text-white/70 text-right" : "text-muted text-left"}`}>
+                          {msg.timestamp}
+                        </div>
+                      </div>
+
+                      {isUser && (
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface border border-line text-content mt-1 shadow-2xs">
+                          <User className="h-4 w-4" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Loading Indicator with Fixed Height and Smooth Pulse (No layout jumps) */}
+            {isLoading && (
+              <div className="flex gap-3 mr-auto items-center animate-in fade-in duration-200">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald border border-emerald-200 dark:border-emerald-800">
+                  <Bot className="h-4 w-4" />
+                </div>
+                <div className="flex items-center gap-2.5 rounded-2xl bg-surface border border-line px-4 py-2.5 shadow-2xs h-10">
+                  <span className="text-xs text-muted font-medium">
+                    {isBn ? "মাঠের তথ্য বিশ্লেষণ হচ্ছে..." : "Reviewing available field information..."}
+                  </span>
+                  <div className="flex items-center gap-1.5 h-3">
+                    <span className="h-2 w-2 rounded-full bg-emerald animate-pulse" />
+                    <span className="h-2 w-2 rounded-full bg-emerald animate-pulse [animation-delay:150ms]" />
+                    <span className="h-2 w-2 rounded-full bg-emerald animate-pulse [animation-delay:300ms]" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Error Banner */}
+            {error && (
+              <div role="alert" className="rounded-xl border border-rose-300 bg-rose-50/80 dark:bg-rose-950/20 dark:border-rose-900 p-3 text-xs text-rose-800 dark:text-rose-300 flex items-start gap-2.5">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
+                <div className="flex-1">
+                  <div className="font-semibold">{isBn ? "বার্তা পাঠাতে ব্যর্থ হয়েছে" : "Request Failed"}</div>
+                  <div className="mt-0.5">{error}</div>
+                </div>
+                {failedPrompt ? <button
+                  type="button"
+                  onClick={() => handleSendMessage(failedPrompt, { retry: true })}
+                  className="px-2.5 py-1 bg-rose-600 text-white rounded-md hover:bg-rose-700 transition-colors shrink-0 text-xs font-medium cursor-pointer"
+                >
+                  {isBn ? "পুনরায় চেষ্টা" : "Retry"}
+                </button> : null}
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Guest Notice Callout */}
+          {!isAuthenticated && messages.length > 0 && (
+            <div className="mt-2 px-3 py-2 rounded-xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/70 dark:bg-amber-950/20 text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between gap-2">
+              <span className="truncate">
+                {isBn
+                  ? "অতিথি মোড: এই আলোচনাটি সাময়িক। সংরক্ষণ করতে লগইন করুন।"
+                  : "Guest mode: this conversation is temporary. Sign in to save permanently."}
+              </span>
+              <Link
+                href="/login"
+                className="font-semibold text-emerald hover:underline shrink-0"
+              >
+                {isBn ? "লগইন" : "Sign In"}
+              </Link>
+            </div>
+          )}
+
+          {/* Voice Input Alert */}
+          {voiceErrorCode && (
+            <div className="mt-2 p-2.5 rounded-xl border border-amber-300 bg-amber-50/90 dark:bg-amber-950/20 dark:border-amber-900 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2.5">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+              <div className="flex-1">
+                <div className="font-semibold">
+                  {voiceErrorCode === "PERMISSION_DENIED"
+                    ? isBn ? "মাইক্রোফোন ব্যবহারের অনুমতি মেলেনি" : "Microphone Access Denied"
+                    : voiceErrorCode === "UNSUPPORTED"
+                    ? isBn ? "ব্রাউজারে ভয়েস সমর্থিত নয়" : "Browser Not Supported"
+                    : voiceErrorCode === "NO_SPEECH"
+                    ? isBn ? "কোনো কথা শনাক্ত করা যায়নি" : "No Speech Detected"
+                    : voiceErrorCode === "TRANSCRIPTION_UNAVAILABLE"
+                    ? isBn ? "ভয়েস বোঝার সেবা এখন পাওয়া যাচ্ছে না" : "Voice transcription is unavailable"
+                    : voiceErrorCode === "AUDIO_TOO_LARGE"
+                    ? isBn ? "রেকর্ডিংটি ছোট করে আবার বলুন" : "Please record a shorter voice message"
+                    : isBn ? "ভয়েস ইনপুট ত্রুটি" : "Voice Input Error"}
+                </div>
+                <div className="mt-0.5 text-content-muted leading-relaxed">
+                  {voiceErrorCode === "PERMISSION_DENIED"
+                    ? t("assistant.voicePermissionDenied")
+                    : voiceErrorCode === "UNSUPPORTED"
+                    ? t("assistant.voiceUnsupported")
+                    : voiceErrorCode === "NO_SPEECH"
+                    ? t("assistant.voiceNoSpeech")
+                    : voiceErrorCode === "TRANSCRIPTION_UNAVAILABLE"
+                    ? isBn ? "ইন্টারনেট সংযোগ বা পরে আবার চেষ্টা করুন।" : "Check your connection or try again later."
+                    : voiceErrorCode === "AUDIO_TOO_LARGE"
+                    ? isBn ? "২৫ সেকেন্ডের মধ্যে ছোট প্রশ্ন বলুন।" : "Keep your voice question under 25 seconds."
+                    : voiceErrorCode === "NETWORK"
+                    ? isBn ? "সংযোগে সমস্যা হয়েছে। আবার চেষ্টা করুন।" : "The connection failed. Please try again."
+                    : voiceErrorDetails || "Voice error occurred."}
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {["NO_SPEECH", "NETWORK", "TRANSCRIPTION_UNAVAILABLE", "AUDIO_CAPTURE", "UNKNOWN"].includes(voiceErrorCode) && isVoiceSupported && (
+                  <button
+                    type="button"
+                    onClick={startListening}
+                    className="px-2 py-1 text-xs font-medium rounded-md bg-amber-600 hover:bg-amber-700 text-white transition-colors cursor-pointer"
+                  >
+                    {isBn ? "আবার বলুন" : "Retry"}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={clearVoiceError}
+                  className="p-1 rounded-md text-muted hover:text-content hover:bg-surface-hover cursor-pointer"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Message Composer Area */}
+          <div className="shrink-0 bg-transparent px-3 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-1 sm:px-5">
+            {/* Active Listening / Interim Transcription Banner */}
+            {(isListening || isTranscribing) && (
+              <div className="mb-2 p-2.5 rounded-xl border border-emerald/30 bg-emerald/5 dark:bg-emerald-950/30 flex items-center justify-between gap-3 animate-in fade-in duration-150">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <span className="relative flex h-3 w-3 shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-semibold text-emerald dark:text-emerald-300 flex items-center gap-1.5">
+                      <span>{isTranscribing ? (isBn ? "কথা লিখে নেওয়া হচ্ছে" : "Transcribing your voice") : t("assistant.listening")}</span>
+                      <span className="text-[10px] font-normal px-1.5 py-0.5 rounded bg-emerald/10 text-emerald-700 dark:text-emerald-300">
+                        {isBn ? "বাংলা + English · Auto" : "Bangla + English · Auto"}
+                      </span>
+                    </div>
+                    <div className="text-xs text-content truncate mt-0.5">
+                      {interimTranscript ? `“${interimTranscript}”` : t("assistant.voiceInterimPlaceholder")}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {isListening && <button
+                    type="button"
+                    onClick={stopListening}
+                    className="px-2.5 py-1 text-xs font-medium rounded-lg bg-rose-600 hover:bg-rose-700 text-white flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <Square className="h-3 w-3 fill-current" />
+                    <span>{t("assistant.listeningStop")}</span>
+                  </button>}
+                </div>
+              </div>
+            )}
+
+        {/* Optional farm selector */}
+        <div className="mx-auto mb-1.5 flex w-full max-w-3xl flex-wrap items-center justify-end gap-3">
+          {/* Farm selector (if user has registered farms) */}
+          {isAuthenticated && farmsList.length > 0 ? (
+            <div className="relative">
+              <Tractor className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-emerald" />
+              <select
+                value={selectedFarmId}
+                onChange={(e) => handleFarmSelection(e.target.value)}
+                disabled={isLoading}
+                aria-label={t("assistant.selectFarm")}
+                className="appearance-none rounded-xl border border-emerald-200 bg-surface dark:border-emerald-800 dark:bg-surface pl-8 pr-8 h-9 text-xs font-medium text-content hover:border-emerald/40 hover:bg-surface focus:outline-none focus:ring-2 focus:ring-emerald/20 focus:border-emerald transition-all duration-150 cursor-pointer shadow-2xs max-w-[180px] sm:max-w-[240px] truncate"
+              >
+                <option value="">{t("assistant.allFarmsGeneral")}</option>
+                {farmsList.map((f) => (
+                  <option key={f._id} value={f._id}>
+                    {f.farmName}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted" />
+            </div>
+          ) : null}
+          {isAuthenticated && isFarmsLoading ? (
+            <span role="status" className="text-[11px] text-content-muted">{isBn ? "মাঠ লোড হচ্ছে…" : "Loading fields…"}</span>
+          ) : null}
+          {isAuthenticated && farmsLoadError ? (
+            <button type="button" onClick={() => setFarmReloadCount((count) => count + 1)} className="text-[11px] text-rose-700 dark:text-rose-300 underline">
+              {isBn ? "মাঠ লোড হয়নি · আবার চেষ্টা" : "Fields unavailable · Retry"}
+            </button>
+          ) : null}
+        </div>
+            {/* Input form */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                // Stop and finalize the transcript first; the farmer can review
+                // or edit it, then send it with the same button.
+                if (isListening) {
+                  stopListening();
+                  return;
+                }
+                if (isTranscribing) return;
+                handleSendMessage();
+              }}
+              aria-busy={isLoading}
+              className="relative mx-auto flex w-full max-w-2xl items-end gap-2 p-1.5 bg-transparent !border-0 !shadow-none focus-within:!border-0 focus-within:!bg-transparent focus-within:!ring-0"
+            >
+              {/* Mic Button */}
+              <button
+                type="button"
+                onClick={isVoiceSupported ? () => {
+                  if (isListening) stopListening();
+                  else if (!isTranscribing) {
+                    voiceBaseInputRef.current = inputValue;
+                    startListening();
+                  }
+                } : undefined}
+                disabled={!isVoiceSupported || isLoading || isTranscribing}
+                title={
+                  !isVoiceSupported
+                    ? t("assistant.voiceUnsupported")
+                    : isTranscribing
+                    ? (isBn ? "কথা লিখে নেওয়া হচ্ছে" : "Transcribing voice")
+                    : isListening
+                    ? t("assistant.voiceInputStop")
+                    : t("assistant.voiceInputStart")
+                }
+                aria-label={
+                  !isVoiceSupported
+                    ? t("assistant.voiceUnsupported")
+                    : isTranscribing
+                    ? (isBn ? "কথা লিখে নেওয়া হচ্ছে" : "Transcribing voice")
+                    : isListening
+                    ? t("assistant.voiceInputStop")
+                    : t("assistant.voiceInputStart")
+                }
+                className={`flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl transition-all duration-200 cursor-pointer ${
+                  !isVoiceSupported
+                    ? "text-muted opacity-40 cursor-not-allowed"
+                    : isListening
+                    ? "bg-rose-600 text-white shadow-md ring-2 ring-rose-400/50 animate-pulse"
+                    : "text-muted hover:text-emerald hover:bg-surface"
+                }`}
+              >
+                {isListening ? (
+                  <Square className="h-4 w-4 fill-current" />
+                ) : !isVoiceSupported ? (
+                  <MicOff className="h-4.5 w-4.5" />
+                ) : (
+                  <Mic className="h-4.5 w-4.5" />
+                )}
+              </button>
+
+              {/* Textarea: Clean input with localized placeholder */}
+              <textarea
+                ref={textareaRef}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={t("assistant.composerPlaceholder")}
+                aria-label={t("assistant.composerPlaceholder")}
+                rows={1}
+                style={{ border: "none", outline: "none", boxShadow: "none" }}
+                className="flex-1 resize-none appearance-none !border-0 bg-transparent py-2 px-2 text-sm text-content !shadow-none !outline-none !ring-0 focus:!border-0 focus:!outline-none focus:!ring-0 min-h-[44px] max-h-36 leading-relaxed placeholder:text-muted/60"
+              />
+
+              {/* Round Send Button */}
+              <button
+                type="submit"
+                disabled={!inputValue.trim() || isLoading || isListening || isTranscribing}
+                aria-label={isBn ? "বার্তা পাঠান" : "Send message"}
+                className={`flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full transition-all duration-200 ${
+                  inputValue.trim() && !isLoading
+                    ? "bg-emerald text-white hover:bg-emerald/90 active:scale-95 shadow-2xs cursor-pointer scale-100"
+                    : "bg-surface-hover text-muted cursor-not-allowed opacity-40 scale-95"
+                }`}
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </form>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+function AssistantPage() {
+  const { t } = useLang();
+  return (
+    <Suspense
+      fallback={<AssistantLoadingState label={t("common.loading")} />}
+    >
+      <AssistantContent />
+    </Suspense>
+  );
+}
+
+export default function ProtectedAssistantPage() {
+  return <PrivateAccess><AssistantPage /></PrivateAccess>;
+}

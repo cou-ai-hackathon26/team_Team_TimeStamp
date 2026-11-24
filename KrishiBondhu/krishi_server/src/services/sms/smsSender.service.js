@@ -1,0 +1,214 @@
+import { SmsNotificationLog } from "../../models/smsNotificationLog.model.js";
+import { hasSmsConsent, maskPhone, smsParts } from "./smsPreferences.js";
+import { extractVerifiedPhone } from "./smsRecipient.service.js";
+
+/**
+ * Reusable, provider-agnostic SMS interface.
+ *
+ * PART 1 SAFETY RULES:
+ *  - There is no live gateway adapter in this part. `sendSms` NEVER contacts a
+ *    provider and NEVER sends to a real phone number.
+ *  - Every call is recorded in the notification log with a status, timestamp,
+ *    attempt count and retry information.
+ *  - Phone numbers are masked in every log and result.
+ *
+ * A future part can register a live adapter via `registerSmsGateway` after
+ * explicit configuration; until then `getSmsMode()` always returns "dry_run".
+ */
+let gatewayAdapter = null;
+// Registration and activation are separate: an adapter may be present for
+// diagnostics while sending stays disabled. Part 2 keeps live OFF by default.
+let liveEnabled = false;
+
+/**
+ * @param adapter  Provider adapter exposing send()
+ * @param options.live  Explicitly activate real sending (default true keeps the
+ *                      Part 1 contract for direct in-process adapters).
+ */
+export function registerSmsGateway(adapter, { live = true } = {}) {
+  if (adapter && typeof adapter.send !== "function") throw new Error("SMS gateway adapter must expose send()");
+  gatewayAdapter = adapter || null;
+  liveEnabled = Boolean(gatewayAdapter) && live === true;
+}
+
+export function getSmsMode() {
+  return gatewayAdapter && liveEnabled ? "live" : "dry_run";
+}
+
+export function isSmsLiveEnabled() {
+  return getSmsMode() === "live";
+}
+
+export function resetSmsGatewayForTests() {
+  gatewayAdapter = null;
+  liveEnabled = false;
+}
+
+function createLogEntry({ userId, category, phone, dedupeKey, status, mode, parts, attempts, nextRetryAt, lastError, metadata }) {
+  return {
+    userId: userId || null,
+    category,
+    phoneLast4: maskPhone(phone),
+    dedupeKey: dedupeKey || null,
+    status,
+    mode,
+    provider: gatewayAdapter?.name || "dry-run",
+    attempts,
+    nextRetryAt: nextRetryAt || null,
+    lastError: lastError || null,
+    parts,
+    metadata: metadata || {},
+    occurredAt: new Date(),
+  };
+}
+
+/**
+ * Persist a log entry. Uses the injected logger when provided (tests / other
+ * stores), otherwise the MongoDB model. Persistence failure never throws to
+ * the caller of sendSms — the result still reports what happened.
+ */
+async function persistLog(entry, logger) {
+  try {
+    if (logger?.create) return await logger.create(entry);
+    if (typeof SmsNotificationLog?.create === "function") return await SmsNotificationLog.create(entry);
+    return entry;
+  } catch (error) {
+    console.warn("[sms] could not persist notification log:", error?.message || error);
+    return entry;
+  }
+}
+
+async function dedupeLookup({ dedupeKey, userId, category, windowMs, logger }) {
+  if (!dedupeKey) return null;
+  if (logger?.findRecent) return logger.findRecent({ dedupeKey, userId, category, windowMs });
+  if (typeof SmsNotificationLog?.findOne === "function") {
+    return SmsNotificationLog.findOne({
+      dedupeKey,
+      ...(userId ? { userId } : {}),
+      category,
+      occurredAt: { $gte: new Date(Date.now() - windowMs) },
+    }).lean();
+  }
+  return null;
+}
+
+/**
+ * Send a notification (dry run in Part 1).
+ * @returns {Promise<{status:string, dryRun:boolean, provider:string, parts:number, log:object, reason?:string}>}
+ */
+export async function sendSms({
+  user = {},
+  preferences = {},
+  text = "",
+  category = "system",
+  dedupeKey = null,
+  now = new Date(),
+  windowMs = 10 * 60 * 1000,
+  logger = null,
+  maxAttempts = 3,
+} = {}) {
+  const mode = getSmsMode();
+  const parts = smsParts(text);
+  const base = { userId: user?._id || user?.id || null, category, phone: user?.phone, dedupeKey, parts };
+
+  // 1. Consent gate — before dedupe or any provider work.
+  if (!hasSmsConsent({ user, preferences, category, now })) {
+    const entry = createLogEntry({
+      ...base,
+      status: "skipped",
+      mode,
+      attempts: 0,
+      nextRetryAt: null,
+      lastError: "no_explicit_consent_or_phone_unverified",
+      metadata: { reason: "consent" },
+    });
+    const log = await persistLog(entry, logger);
+    return { status: "skipped", dryRun: true, provider: entry.provider, parts, log, reason: "no_consent" };
+  }
+
+  // 2. Duplicate suppression — one alert per dedupe key per window.
+  const recent = await dedupeLookup({ dedupeKey, userId: base.userId, category, windowMs, logger });
+  if (recent) {
+    const entry = createLogEntry({
+      ...base,
+      status: "skipped",
+      mode,
+      attempts: 0,
+      nextRetryAt: null,
+      lastError: "duplicate_within_window",
+      metadata: { duplicateOf: recent.dedupeKey || recent._id?.toString?.() || null },
+    });
+    const log = await persistLog(entry, logger);
+    return { status: "skipped", dryRun: true, provider: entry.provider, parts, log, reason: "duplicate" };
+  }
+
+  // 3. DRY RUN is the default. Even with an adapter registered (diagnostics),
+  //    no provider call is made unless live mode was explicitly enabled.
+  if (mode !== "live") {
+    const entry = createLogEntry({
+      ...base,
+      status: "dry_run",
+      mode: "dry_run",
+      attempts: 1,
+      nextRetryAt: null,
+      metadata: { note: "Dry run: no SMS is sent", to: maskPhone(user?.phone), provider: gatewayAdapter?.name || "dry-run" },
+    });
+    const log = await persistLog(entry, logger);
+    return { status: "dry_run", dryRun: true, provider: gatewayAdapter?.name || "dry-run", parts, log };
+  }
+
+  // 4. Live adapter path (only reached with explicit SMS_LIVE activation).
+  // Re-derive the verified E164 number here; consent alone is not a recipient.
+  const recipient = extractVerifiedPhone(user, { now });
+  if (!recipient) {
+    const entry = createLogEntry({
+      ...base, status: "skipped", mode, attempts: 0, nextRetryAt: null,
+      lastError: "unverified_recipient", metadata: { reason: "recipient" },
+    });
+    const log = await persistLog(entry, logger);
+    return { status: "skipped", dryRun: mode !== "live", provider: entry.provider, parts, log, reason: "unverified_recipient" };
+  }
+
+  // An ambiguous submission (timeout/network/unknown HTTP) must never be
+  // retried automatically: the provider may already have accepted the SMS.
+  const isAmbiguous = (error) =>
+    ["provider_timeout", "provider_network_error", "provider_http_error", "unrecognised_provider_response"]
+      .includes(error);
+
+  try {
+    const result = await gatewayAdapter.send({ to: recipient.e164, text, category, dedupeKey });
+    const ok = result?.ok === true;
+    const ambiguous = !ok && isAmbiguous(result?.error);
+    const entry = createLogEntry({
+      ...base,
+      status: ok ? "submitted" : "failed",
+      mode: "live",
+      attempts: 1,
+      nextRetryAt: null, // no automatic retry, including clear provider rejections
+      lastError: ok ? null : (ambiguous ? "ambiguous_submission_no_retry" : (result?.error || "provider_error")),
+      metadata: {
+        providerMessageId: result?.messageId || null,
+        providerRequestId: result?.requestId || null,
+        providerStatus: result?.providerStatus || (ok ? "submitted" : null),
+        deliveryConfirmed: Boolean(result?.deliveryConfirmed) === true,
+        ambiguous,
+        providerErrorCode: result?.responseCode ?? result?.errorCode ?? null,
+        maxAttempts,
+      },
+    });
+    const log = await persistLog(entry, logger);
+    return { status: ok ? "submitted" : "failed", dryRun: false, provider: gatewayAdapter.name, parts, log, reason: ambiguous ? "ambiguous_submission_no_retry" : undefined };
+  } catch (error) {
+    const entry = createLogEntry({
+      ...base,
+      status: "failed",
+      mode: "live",
+      attempts: 1,
+      nextRetryAt: null,
+      lastError: "ambiguous_submission_no_retry",
+      metadata: { deliveryConfirmed: false, ambiguous: true, maxAttempts },
+    });
+    const log = await persistLog(entry, logger);
+    return { status: "failed", dryRun: false, provider: gatewayAdapter.name, parts, log, reason: "ambiguous_submission_no_retry" };
+  }
+}

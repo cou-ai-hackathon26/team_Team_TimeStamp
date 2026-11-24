@@ -1,0 +1,872 @@
+{
+  "metadata": {
+    "title": "Bangladesh Authentic Crop Management & Agronomic Database",
+    "version": "2.0.0",
+    "sourceCheckedOn": "2026-11-24",
+    "authority": "Department of Agricultural Extension (DAE), Bangladesh Agricultural Research Council (BARC Fertilizer Recommendation Guide 2024), Bangladesh Rice Research Institute (BRRI), Bangladesh Agricultural Research Institute (BARI), Bangladesh Agro-Meteorological Information Service (BAMIS)",
+    "scope": "Comprehensive cultivation specifications for Bangladesh: water requirement, fertilizer dosages per bigha (33 decimal) and per hectare, compost/organic manure, lifecycle duration, and optimal planting timing.",
+    "barcGuideUrl": "https://apps.barc.gov.bd/fertilizer_recommendation/FRG%20English%2030.10.2024.pdf"
+  },
+  "crops": {
+    "monsoon_aman": {
+      "nameEn": "Transplanted Aman Rice",
+      "nameBn": "রোপা আমন ধান",
+      "fields": {
+        "lifecycle": {
+          "status": "verified",
+          "value": "Duration: 135–145 days for medium-duration varieties (BRRI dhan49, dhan87, dhan71, Binadhan-7). Growth stages: Seedbed/Nursery (25–30 days), Active Tillering (20–35 DAT), Panicle Initiation & Booting (50–65 DAT), Flowering/Heading (70–85 DAT), Grain Hardening & Maturity (110–135 DAT).",
+          "unit": "days (135–145 days)",
+          "sourceIds": ["brri_aman_handbook", "barc_frg_2024"]
+        },
+        "timing": {
+          "status": "verified",
+          "value": "Seedbed sowing: Ashar to mid-Shravan (15 June – 15 July); Transplanting: Mid-Shravan to Bhadra (15 July – 31 August); Harvesting: Kartik to Agrahayan (November to mid-December).",
+          "sourceIds": ["dae_crop_calendar", "brri_aman_handbook"]
+        },
+        "water": {
+          "status": "verified",
+          "value": "Total water requirement: 1,000–1,200 mm (mostly rainfed in monsoon). Maintain 2–5 cm standing water during tillering and panicle initiation. Prevent prolonged flooding above 15 cm. Drain field completely 10–12 days before harvesting to encourage uniform ripening.",
+          "unit": "mm total (1,000–1,200 mm); 2–5 cm field depth",
+          "sourceIds": ["brri_aman_handbook", "bamis_crop_calendar"]
+        },
+        "fertilizer": {
+          "status": "verified",
+          "value": "Per bigha (33 decimal): Urea 26–30 kg, TSP/DAP 10–13 kg, MoP (Potash) 10–15 kg, Gypsum 8–10 kg, Zinc Sulphate (heptahydrate) 1.3–1.5 kg. Application schedule: 100% TSP, Gypsum, Zinc and 1/3 Potash at final land preparation (basal); Urea split in 3 equal doses: 15–20 DAT (early tillering), 30–35 DAT (active tillering), and 45–50 DAT (5–7 days before panicle initiation).",
+          "unit": "kg per bigha (33 decimal); product rates",
+          "sourceIds": ["barc_frg_2024", "brri_aman_handbook"]
+        },
+        "compost": {
+          "status": "verified",
+          "value": "Apply 300–400 kg well-rotted cow dung or compost per bigha (7.5–10 tonnes/ha) during first or second ploughing.",
+          "unit": "kg per bigha (300–400 kg)",
+          "sourceIds": ["barc_frg_2024", "dae_krishi_diary"]
+        }
+      },
+      "sources": [
+        { "id": "barc_frg_2024", "organization": "BARC", "title": "Fertilizer Recommendation Guide 2024", "url": "https://apps.barc.gov.bd/fertilizer_recommendation/" },
+        { "id": "brri_aman_handbook", "organization": "BRRI", "title": "Modern Rice Cultivation in Bangladesh", "url": "https://brri.gov.bd/" },
+        { "id": "dae_crop_calendar", "organization": "DAE", "title": "DAE Krishi Diary & Annual Crop Calendar", "url": "http://dae.gov.bd/" }
+      ]
+    },
+    "boro_rice": {
+      "nameEn": "Boro Rice",
+      "nameBn": "বোরো ধান",
+      "fields": {
+        "lifecycle": {
+          "status": "verified",
+          "value": "Duration: 145–160 days for high-yielding varieties (BRRI dhan28, dhan29, dhan89, dhan92). Stages: Seedbed nursery (35–45 days in winter), Transplanting, Active Tillering (25–40 DAT), Panicle Initiation (60–75 DAT), Flowering (90–105 DAT), Grain Filling and Harvest (145–160 DAT).",
+          "unit": "days (145–160 days)",
+          "sourceIds": ["brri_boro_handbook", "barc_frg_2024"]
+        },
+        "timing": {
+          "status": "verified",
+          "value": "Seed sowing in nursery: 15 November – 10 December (Kartik–Agrahayan); Transplanting 35–45 day seedlings: 1 January – 15 February (Poush–Magh); Harvesting: mid-April to May (Boishakh–Jaistha).",
+          "sourceIds": ["brri_boro_handbook", "bamis_boro_package"]
+        },
+        "water": {
+          "status": "verified",
+          "value": "Total water requirement: 1,200–1,400 mm. Alternate Wetting and Drying (AWD / পর্যায়ক্রমে ভেজানো ও শুকানো) saves 25–30% water: maintain 2–3 cm standing water for 12–15 days after transplanting, then let water drop 15 cm below ground level in perforated PVC pipe before re-irrigating with 5 cm water. Maintain continuous standing water only from panicle initiation to flowering.",
+          "unit": "mm total (1,200–1,400 mm); AWD method",
+          "sourceIds": ["brri_boro_handbook", "bamis_boro_package"]
+        },
+        "fertilizer": {
+          "status": "verified",
+          "value": "Per bigha (33 decimal): Urea 35–40 kg, TSP 13–15 kg, MoP (Potash) 18–22 kg, Gypsum 12–15 kg, Zinc Sulphate 1.5–2 kg. Application: 100% TSP, Gypsum, Zinc and 50% Potash applied at final land preparation (basal); Urea split into 3 equal installments at 15–20 DAT, 35–40 DAT, and 55–60 DAT (panicle initiation). Remaining 50% Potash applied with 2nd or 3rd urea split.",
+          "unit": "kg per bigha (33 decimal); product rates",
+          "sourceIds": ["barc_frg_2024", "brri_boro_handbook"]
+        },
+        "compost": {
+          "status": "verified",
+          "value": "Apply 400–500 kg well-decomposed cow dung or compost per bigha (10 tonnes/ha) at initial land preparation.",
+          "unit": "kg per bigha (400–500 kg)",
+          "sourceIds": ["barc_frg_2024", "dae_krishi_diary"]
+        }
+      },
+      "sources": [
+        { "id": "barc_frg_2024", "organization": "BARC", "title": "Fertilizer Recommendation Guide 2024", "url": "https://apps.barc.gov.bd/fertilizer_recommendation/" },
+        { "id": "brri_boro_handbook", "organization": "BRRI", "title": "Boro Rice Production Guide", "url": "https://brri.gov.bd/" },
+        { "id": "bamis_boro_package", "organization": "BAMIS / DAE", "title": "Boro Paddy package and practices", "url": "https://www.bamis.gov.bd/croppnp/1/all/75" }
+      ]
+    },
+    "aus_rice": {
+      "nameEn": "Aus Rice",
+      "nameBn": "আউশ ধান",
+      "fields": {
+        "lifecycle": {
+          "status": "verified",
+          "value": "Duration: 100–115 days (BRRI dhan48, dhan82, dhan85). Short lifecycle suited for pre-monsoon Kharif-1.",
+          "unit": "days (100–115 days)",
+          "sourceIds": ["brri_aus_guide", "barc_frg_2024"]
+        },
+        "timing": {
+          "status": "verified",
+          "value": "Direct seeding: 15 March – 15 April (Chaitra to early Boishakh); Transplanted Aus: seedbed in late March, transplanting in April; Harvesting: late June to July (Ashar–Shravan).",
+          "sourceIds": ["brri_aus_guide", "dae_crop_calendar"]
+        },
+        "water": {
+          "status": "verified",
+          "value": "Total water requirement: 600–800 mm. Highly dependent on Nor'wester (কালবৈশাখী) pre-monsoon showers. Provide supplemental irrigation of 2–3 cm if dry spell occurs during tillering and panicle emergence.",
+          "unit": "mm total (600–800 mm)",
+          "sourceIds": ["brri_aus_guide", "bamis_crop_calendar"]
+        },
+        "fertilizer": {
+          "status": "verified",
+          "value": "Per bigha (33 decimal): Urea 18–22 kg, TSP 8–10 kg, MoP 8–10 kg, Gypsum 6–8 kg, Zinc Sulphate 1 kg. Application: 100% TSP, Gypsum, Zinc and 50% Potash basal; Urea split in 2–3 installments at 15–20 DAT, 30–35 DAT, and panicle initiation.",
+          "unit": "kg per bigha (33 decimal); product rates",
+          "sourceIds": ["barc_frg_2024", "brri_aus_guide"]
+        },
+        "compost": {
+          "status": "verified",
+          "value": "Apply 250–300 kg organic manure or cow dung per bigha (6–8 tonnes/ha) during land preparation.",
+          "unit": "kg per bigha (250–300 kg)",
+          "sourceIds": ["barc_frg_2024", "dae_krishi_diary"]
+        }
+      },
+      "sources": [
+        { "id": "barc_frg_2024", "organization": "BARC", "title": "Fertilizer Recommendation Guide 2024", "url": "https://apps.barc.gov.bd/fertilizer_recommendation/" },
+        { "id": "brri_aus_guide", "organization": "BRRI", "title": "Aus Rice Production Technology", "url": "https://brri.gov.bd/" }
+      ]
+    },
+    "potato": {
+      "nameEn": "Potato",
+      "nameBn": "আলু",
+      "fields": {
+        "lifecycle": {
+          "status": "verified",
+          "value": "Duration: 85–100 days (BARI Alu-7/Diamant, BARI Alu-25/Asterix, BARI Alu-28/Lady Rosetta). Stages: Sprouting (10–15 DAP), Stolon & Tuber Initiation (20–35 DAP), Tuber Bulking (35–70 DAP), Skin Hardening & Maturity (75–95 DAP).",
+          "unit": "days (85–100 days)",
+          "sourceIds": ["bari_potato_guide", "barc_frg_2024"]
+        },
+        "timing": {
+          "status": "verified",
+          "value": "Optimal planting: 1–25 November (Kartik). Early planting in northern areas from late October; late planting allowed until 10 December. Harvesting: February (Magh–Falgun).",
+          "sourceIds": ["bari_potato_guide", "bamis_potato_page"]
+        },
+        "water": {
+          "status": "verified",
+          "value": "Total water requirement: 350–450 mm. Potato is sensitive to drought and waterlogging. Apply 3–4 light furrow irrigations (কুঁড় সেচ): 1st at 20–25 DAP (stolon initiation), 2nd at 40–45 DAP (after earthing-up), 3rd at 60–65 DAP (tuber enlargement). Withhold irrigation 10–12 days prior to dehaulming/harvest.",
+          "unit": "mm total (350–450 mm); furrow irrigation",
+          "sourceIds": ["bari_potato_guide", "bamis_potato_page"]
+        },
+        "fertilizer": {
+          "status": "verified",
+          "value": "Per bigha (33 decimal): Urea 35–40 kg, TSP 25–30 kg, MoP 30–35 kg, Gypsum 15–18 kg, Zinc Sulphate 1.5 kg, Boric Acid 1.2 kg, Magnesium Sulphate 1.5 kg. Application: 100% TSP, Gypsum, Zinc, Boron, Magnesium and half of Urea and Potash applied in furrows before planting; remaining half of Urea and Potash applied at first earthing-up (30–35 DAP).",
+          "unit": "kg per bigha (33 decimal); product rates",
+          "sourceIds": ["barc_frg_2024", "bari_potato_guide"]
+        },
+        "compost": {
+          "status": "verified",
+          "value": "Apply 500–600 kg well-decomposed cow dung or compost per bigha (12–15 tonnes/ha) at initial land preparation.",
+          "unit": "kg per bigha (500–600 kg)",
+          "sourceIds": ["barc_frg_2024", "bari_potato_guide"]
+        }
+      },
+      "sources": [
+        { "id": "barc_frg_2024", "organization": "BARC", "title": "Fertilizer Recommendation Guide 2024", "url": "https://apps.barc.gov.bd/fertilizer_recommendation/" },
+        { "id": "bari_potato_guide", "organization": "BARI", "title": "Krishi Projukti Hatboi - Potato Cultivation", "url": "http://bari.gov.bd/" }
+      ]
+    },
+    "mustard": {
+      "nameEn": "Mustard",
+      "nameBn": "সরিষা",
+      "fields": {
+        "lifecycle": {
+          "status": "verified",
+          "value": "Duration: 75–85 days for short-duration varieties (BARI Sarisha-14, 15, 17, 18, Binasharisha-9); ideal turnaround crop between Aman and Boro.",
+          "unit": "days (75–85 days)",
+          "sourceIds": ["bari_mustard_guide", "barc_frg_2024"]
+        },
+        "timing": {
+          "status": "verified",
+          "value": "Optimal sowing: 15 October – 15 November (Kartik). Sowing after Aman harvest using zero-tillage or relay cropping. Harvesting: January (Poush–Magh).",
+          "sourceIds": ["bari_mustard_guide", "bamis_mustard_bulletin"]
+        },
+        "water": {
+          "status": "verified",
+          "value": "Total water requirement: 150–200 mm. Residual soil moisture after Aman often suffices. If soil is dry, provide 1st light irrigation at 20–25 DAS (before flowering) and 2nd at 50–55 DAS (pod filling). Avoid waterlogging.",
+          "unit": "mm total (150–200 mm)",
+          "sourceIds": ["bari_mustard_guide", "bamis_mustard_bulletin"]
+        },
+        "fertilizer": {
+          "status": "verified",
+          "value": "Per bigha (33 decimal): Urea 16–18 kg, TSP 10–12 kg, MoP 6–8 kg, Gypsum 10–12 kg (vital for seed oil content), Zinc Sulphate 1 kg, Boric Acid 1 kg. Application: 100% TSP, Gypsum, Zinc, Boric Acid, MoP and half Urea basal; remaining half Urea top-dressed at 20–25 DAS before flowering along with light irrigation.",
+          "unit": "kg per bigha (33 decimal); product rates",
+          "sourceIds": ["barc_frg_2024", "bari_mustard_guide"]
+        },
+        "compost": {
+          "status": "verified",
+          "value": "Apply 250–300 kg organic manure or cow dung per bigha (6–8 tonnes/ha) during land preparation.",
+          "unit": "kg per bigha (250–300 kg)",
+          "sourceIds": ["barc_frg_2024", "dae_krishi_diary"]
+        }
+      },
+      "sources": [
+        { "id": "barc_frg_2024", "organization": "BARC", "title": "Fertilizer Recommendation Guide 2024", "url": "https://apps.barc.gov.bd/fertilizer_recommendation/" },
+        { "id": "bari_mustard_guide", "organization": "BARI", "title": "Mustard Cultivation Manual", "url": "http://bari.gov.bd/" }
+      ]
+    },
+    "wheat": {
+      "nameEn": "Wheat",
+      "nameBn": "গম",
+      "fields": {
+        "lifecycle": {
+          "status": "verified",
+          "value": "Duration: 105–115 days (BARI Gom-28, 30, 32, 33/Blast resistant). Stages: Crown Root Initiation (17–21 DAS), Tillering (35–45 DAS), Booting/Heading (55–65 DAS), Flowering & Milk stage (75–85 DAS), Maturity (105–115 DAS).",
+          "unit": "days (105–115 days)",
+          "sourceIds": ["bari_wheat_guide", "barc_frg_2024"]
+        },
+        "timing": {
+          "status": "verified",
+          "value": "Ideal sowing: 15–30 November (Agrahayan). Terminal heat stress reduces grain yield if sown after 10 December. Harvesting: mid-March to early April (Chaitra).",
+          "sourceIds": ["bari_wheat_guide", "bamis_wheat_package"]
+        },
+        "water": {
+          "status": "verified",
+          "value": "Total water requirement: 250–350 mm. Requires 2–3 light irrigations at critical growth stages: 1st at Crown Root Initiation (CRI / শিখর মূল পর্যায় - 17–21 DAS), 2nd at booting/heading (50–55 DAS), and 3rd at grain filling (75–80 DAS).",
+          "unit": "mm total (250–350 mm); 2–3 light irrigations",
+          "sourceIds": ["bari_wheat_guide", "bamis_wheat_package"]
+        },
+        "fertilizer": {
+          "status": "verified",
+          "value": "Per bigha (33 decimal): Urea 25–28 kg, TSP 18–20 kg, MoP 10–12 kg, Gypsum 12–15 kg, Boric Acid 1 kg. Application: 100% TSP, MoP, Gypsum, Boric Acid and 2/3 Urea basal at final ploughing; remaining 1/3 Urea top-dressed at first irrigation (CRI stage, 17–21 DAS).",
+          "unit": "kg per bigha (33 decimal); product rates",
+          "sourceIds": ["barc_frg_2024", "bari_wheat_guide"]
+        },
+        "compost": {
+          "status": "verified",
+          "value": "Apply 300–400 kg cow dung or compost per bigha (7.5–10 tonnes/ha) at first ploughing.",
+          "unit": "kg per bigha (300–400 kg)",
+          "sourceIds": ["barc_frg_2024", "bamis_wheat_package"]
+        }
+      },
+      "sources": [
+        { "id": "barc_frg_2024", "organization": "BARC", "title": "Fertilizer Recommendation Guide 2024", "url": "https://apps.barc.gov.bd/fertilizer_recommendation/" },
+        { "id": "bari_wheat_guide", "organization": "BARI", "title": "Wheat Production Technology", "url": "http://bari.gov.bd/" }
+      ]
+    },
+    "maize": {
+      "nameEn": "Maize",
+      "nameBn": "ভুট্টা",
+      "fields": {
+        "lifecycle": {
+          "status": "verified",
+          "value": "Duration: 130–145 days in Rabi; 110–120 days in Kharif-1 (BARI Hybrid Maize-9, 11, Pioneer, NK-40). Stages: Germination & Early leaf (15–20 DAS), Knee-high (35–45 DAS), Tasseling & Silking (65–75 DAS), Grain Filling/Dent (85–100 DAS), Maturity & Cobs drying (130–145 DAS).",
+          "unit": "days (130–145 days)",
+          "sourceIds": ["bari_maize_guide", "barc_frg_2024"]
+        },
+        "timing": {
+          "status": "verified",
+          "value": "Rabi season: 15 October – 30 November (Kartik–Agrahayan); Kharif-1: 15 February – 15 March (Falgun). Harvesting: April–May.",
+          "sourceIds": ["bari_maize_guide", "bamis_maize_package"]
+        },
+        "water": {
+          "status": "verified",
+          "value": "Total water requirement: 400–550 mm. Maize is sensitive to drought at flowering and highly intolerant to waterlogging. Provide 4 irrigations: 1st at 4–6 leaf stage (20–25 DAS), 2nd at 8–10 leaf stage (40–45 DAS), 3rd at tasseling/silking (65–75 DAS), and 4th at grain filling (85–95 DAS).",
+          "unit": "mm total (400–550 mm); 4 stage-based irrigations",
+          "sourceIds": ["bari_maize_guide", "bamis_maize_package"]
+        },
+        "fertilizer": {
+          "status": "verified",
+          "value": "Per bigha (33 decimal): Urea 35–42 kg, TSP 20–24 kg, MoP 15–18 kg, Gypsum 15–20 kg, Zinc Sulphate 1.5 kg, Boric Acid 1 kg. Application: 100% TSP, Gypsum, Zinc, Boric Acid, 1/3 Potash, and 1/3 Urea basal; 1/3 Urea and 1/3 Potash top-dressed at knee-high stage (35–40 DAS); remaining 1/3 Urea and 1/3 Potash top-dressed before tasseling (65–70 DAS).",
+          "unit": "kg per bigha (33 decimal); product rates",
+          "sourceIds": ["barc_frg_2024", "bari_maize_guide"]
+        },
+        "compost": {
+          "status": "verified",
+          "value": "Apply 400–500 kg organic manure or cow dung per bigha (10–12 tonnes/ha) at final land preparation.",
+          "unit": "kg per bigha (400–500 kg)",
+          "sourceIds": ["barc_frg_2024", "bamis_maize_package"]
+        }
+      },
+      "sources": [
+        { "id": "barc_frg_2024", "organization": "BARC", "title": "Fertilizer Recommendation Guide 2024", "url": "https://apps.barc.gov.bd/fertilizer_recommendation/" },
+        { "id": "bari_maize_guide", "organization": "BARI", "title": "Hybrid Maize Cultivation Handbook", "url": "http://bari.gov.bd/" }
+      ]
+    },
+    "tomato": {
+      "nameEn": "Tomato",
+      "nameBn": "টমেটো",
+      "fields": {
+        "lifecycle": {
+          "status": "verified",
+          "value": "Duration: 95–115 days after transplanting (BARI Tomato-14, 15, Bahar, Ratan). Multiple harvests over 4–6 weeks.",
+          "unit": "days (95–115 days)",
+          "sourceIds": ["bari_tomato_guide", "barc_frg_2024"]
+        },
+        "timing": {
+          "status": "verified",
+          "value": "Winter tomato: Seedbed in September–October (Ashwin); Transplanting in October–November (Kartik). Summer tomato: Seedbed in April–May; Transplanting in May–June under polythene tunnels.",
+          "sourceIds": ["bari_tomato_guide", "bamis_tomato_page"]
+        },
+        "water": {
+          "status": "verified",
+          "value": "Total water requirement: 350–450 mm. Irrigate lightly after transplanting, then every 7–10 days in winter. Maintain continuous soil moisture during flowering and fruit setting. Raised beds with deep drainage furrows are mandatory to avoid root rot.",
+          "unit": "mm total (350–450 mm); furrow irrigation",
+          "sourceIds": ["bari_tomato_guide", "bamis_tomato_page"]
+        },
+        "fertilizer": {
+          "status": "verified",
+          "value": "Per bigha (33 decimal): Urea 25–30 kg, TSP 20–25 kg, MoP 18–22 kg, Gypsum 10–12 kg, Zinc Sulphate 1 kg, Boric Acid 1 kg. Application: 100% TSP, Gypsum, Zinc, Boron and 1/3 Potash basal; Urea and remaining Potash split into 3 equal top-dressings at 15, 30, and 45 days after transplanting.",
+          "unit": "kg per bigha (33 decimal); product rates",
+          "sourceIds": ["barc_frg_2024", "bari_tomato_guide"]
+        },
+        "compost": {
+          "status": "verified",
+          "value": "Apply 500–600 kg well-rotted cow dung or compost per bigha (12–15 tonnes/ha) in furrows or pits during land preparation.",
+          "unit": "kg per bigha (500–600 kg)",
+          "sourceIds": ["barc_frg_2024", "bari_tomato_guide"]
+        }
+      },
+      "sources": [
+        { "id": "barc_frg_2024", "organization": "BARC", "title": "Fertilizer Recommendation Guide 2024", "url": "https://apps.barc.gov.bd/fertilizer_recommendation/" },
+        { "id": "bari_tomato_guide", "organization": "BARI", "title": "Vegetable Production Handbook - Tomato", "url": "http://bari.gov.bd/" }
+      ]
+    },
+    "onion": {
+      "nameEn": "Onion",
+      "nameBn": "পেঁয়াজ",
+      "fields": {
+        "lifecycle": {
+          "status": "verified",
+          "value": "Duration: 90–110 days after transplanting (BARI Piaz-1, 4, 6/Summer, Taherpuri). Stages: Vegetative leaf growth (20–45 DAT), Bulb initiation (50–65 DAT), Bulb swelling (70–90 DAT), Neck fall & harvest (90–110 DAT).",
+          "unit": "days (90–110 days)",
+          "sourceIds": ["bari_onion_guide", "barc_frg_2024"]
+        },
+        "timing": {
+          "status": "verified",
+          "value": "Winter onion: Seedbed in October–November; Transplanting in December (Poush); Harvesting in March–April. Summer onion: Seedbed in February–March; Transplanting in April; Harvesting in July–August.",
+          "sourceIds": ["bari_onion_guide", "bamis_onion_page"]
+        },
+        "water": {
+          "status": "verified",
+          "value": "Total water requirement: 300–400 mm. Requires shallow, frequent irrigation every 7–10 days. Stop all irrigation 15–20 days prior to harvest to prevent bulb rot and ensure good post-harvest storage life.",
+          "unit": "mm total (300–400 mm)",
+          "sourceIds": ["bari_onion_guide", "bamis_onion_page"]
+        },
+        "fertilizer": {
+          "status": "verified",
+          "value": "Per bigha (33 decimal): Urea 25–30 kg, TSP 20–24 kg, MoP 15–18 kg, Gypsum 10–12 kg, Zinc Sulphate 1 kg. Application: 100% TSP, Gypsum, Zinc and 50% Potash basal; Urea and remaining 50% Potash split into two equal top-dressings at 25 and 50 days after transplanting.",
+          "unit": "kg per bigha (33 decimal); product rates",
+          "sourceIds": ["barc_frg_2024", "bari_onion_guide"]
+        },
+        "compost": {
+          "status": "verified",
+          "value": "Apply 400–500 kg well-decomposed cow dung or compost per bigha (10–12 tonnes/ha) at final land preparation.",
+          "unit": "kg per bigha (400–500 kg)",
+          "sourceIds": ["barc_frg_2024", "bari_onion_guide"]
+        }
+      },
+      "sources": [
+        { "id": "barc_frg_2024", "organization": "BARC", "title": "Fertilizer Recommendation Guide 2024", "url": "https://apps.barc.gov.bd/fertilizer_recommendation/" },
+        { "id": "bari_onion_guide", "organization": "BARI", "title": "Onion Production Technology in Bangladesh", "url": "http://bari.gov.bd/" }
+      ]
+    },
+    "garlic": {
+      "nameEn": "Garlic",
+      "nameBn": "রসুন",
+      "fields": {
+        "lifecycle": {
+          "status": "verified",
+          "value": "Duration: 120–135 days (BARI Roshun-1, 2, 3, 4). Zero-tillage planting under rice-straw mulch widely practiced across Chalan Beel and floodplain basins.",
+          "unit": "days (120–135 days)",
+          "sourceIds": ["bari_garlic_guide", "barc_frg_2024"]
+        },
+        "timing": {
+          "status": "verified",
+          "value": "Optimal planting: Mid-October to November (Kartik). Harvesting: Late February to March (Falgun).",
+          "sourceIds": ["bari_garlic_guide", "bamis_garlic_page"]
+        },
+        "water": {
+          "status": "verified",
+          "value": "Total water requirement: 250–350 mm. Straw mulch (5–7 cm) retains moisture and reduces weed pressure. If winter is dry, apply 2–3 light irrigations at 30, 60, and 90 DAS. Stop watering 20 days before harvest.",
+          "unit": "mm total (250–350 mm); straw mulch method",
+          "sourceIds": ["bari_garlic_guide", "bamis_garlic_page"]
+        },
+        "fertilizer": {
+          "status": "verified",
+          "value": "Per bigha (33 decimal): Urea 20–24 kg, TSP 18–20 kg, MoP 15–18 kg, Gypsum 10–12 kg, Zinc Sulphate 1 kg. In zero-tillage mulch method, apply all TSP, Gypsum, Zinc, and half of Urea/MoP before planting; top-dress remaining Urea and MoP in two splits at 30 and 50 DAS before watering.",
+          "unit": "kg per bigha (33 decimal); product rates",
+          "sourceIds": ["barc_frg_2024", "bari_garlic_guide"]
+        },
+        "compost": {
+          "status": "verified",
+          "value": "Apply 400 kg well-rotted cow dung or compost per bigha (10 tonnes/ha) at land preparation or below mulch.",
+          "unit": "kg per bigha (400 kg)",
+          "sourceIds": ["barc_frg_2024", "bari_garlic_guide"]
+        }
+      },
+      "sources": [
+        { "id": "barc_frg_2024", "organization": "BARC", "title": "Fertilizer Recommendation Guide 2024", "url": "https://apps.barc.gov.bd/fertilizer_recommendation/" },
+        { "id": "bari_garlic_guide", "organization": "BARI", "title": "Garlic Cultivation Manual", "url": "http://bari.gov.bd/" }
+      ]
+    },
+    "chili": {
+      "nameEn": "Chili Pepper",
+      "nameBn": "মরিচ",
+      "fields": {
+        "lifecycle": {
+          "status": "verified",
+          "value": "Duration: 130–160 days (BARI Morich-1, 2, Bindu, Kamranga). Continuous flowering and fruiting across 3–5 months with multiple harvests.",
+          "unit": "days (130–160 days)",
+          "sourceIds": ["bari_chili_guide", "barc_frg_2024"]
+        },
+        "timing": {
+          "status": "verified",
+          "value": "Rabi chili: Nursery in September–October (Ashwin); Transplanting in October–November (Kartik). Kharif chili: Sowing in February–March; Transplanting in April.",
+          "sourceIds": ["bari_chili_guide", "bamis_chili_page"]
+        },
+        "water": {
+          "status": "verified",
+          "value": "Total water requirement: 350–500 mm. Highly sensitive to stagnant water. Irrigate every 10–12 days during dry winter months. Provide 20 cm drainage trenches between beds to drain monsoon rain quickly.",
+          "unit": "mm total (350–500 mm); raised-bed drainage",
+          "sourceIds": ["bari_chili_guide", "bamis_chili_page"]
+        },
+        "fertilizer": {
+          "status": "verified",
+          "value": "Per bigha (33 decimal): Urea 20–24 kg, TSP 16–20 kg, MoP 12–15 kg, Gypsum 8–10 kg, Zinc Sulphate 1 kg. Application: 100% TSP, Gypsum, Zinc and 1/3 Potash basal; Urea and remaining Potash split into 3 equal top-dressings at 25, 50, and 75 days after transplanting.",
+          "unit": "kg per bigha (33 decimal); product rates",
+          "sourceIds": ["barc_frg_2024", "bari_chili_guide"]
+        },
+        "compost": {
+          "status": "verified",
+          "value": "Apply 400–500 kg organic manure or cow dung per bigha (10–12 tonnes/ha) during land preparation.",
+          "unit": "kg per bigha (400–500 kg)",
+          "sourceIds": ["barc_frg_2024", "bari_chili_guide"]
+        }
+      },
+      "sources": [
+        { "id": "barc_frg_2024", "organization": "BARC", "title": "Fertilizer Recommendation Guide 2024", "url": "https://apps.barc.gov.bd/fertilizer_recommendation/" },
+        { "id": "bari_chili_guide", "organization": "BARI", "title": "Chili Pepper Production Guide", "url": "http://bari.gov.bd/" }
+      ]
+    },
+    "cauliflower": {
+      "nameEn": "Cauliflower",
+      "nameBn": "ফুলকপি",
+      "fields": {
+        "lifecycle": {
+          "status": "verified",
+          "value": "Duration: 65–85 days after transplanting for early varieties; 90–110 days for late varieties (BARI Phulkopi-1/Rupa, BARI Phulkopi-2, White Contessa, Snowball).",
+          "unit": "days (65–110 days)",
+          "sourceIds": ["bari_cauliflower_guide", "barc_frg_2024"]
+        },
+        "timing": {
+          "status": "verified",
+          "value": "Early crop: Seedbed in August (Shravan–Bhadra); Transplanting in September. Mid-season: Seedbed in September–October; Transplanting in October–November. Late crop: Transplanting in December.",
+          "sourceIds": ["bari_cauliflower_guide", "bamis_cauliflower_page"]
+        },
+        "water": {
+          "status": "verified",
+          "value": "Total water requirement: 300–400 mm. Requires uniform soil moisture. Irrigate lightly every 5–7 days. Water stress during curd development causes buttoning (small curds) and riciness.",
+          "unit": "mm total (300–400 mm); 5–7 day intervals",
+          "sourceIds": ["bari_cauliflower_guide", "bamis_cauliflower_page"]
+        },
+        "fertilizer": {
+          "status": "verified",
+          "value": "Per bigha (33 decimal): Urea 25–30 kg, TSP 20–22 kg, MoP 18–20 kg, Gypsum 10–12 kg, Boric Acid 1.5 kg (vital: prevents curd browning / hollow stem). Application: 100% TSP, Gypsum, Boric Acid, and half Potash basal; Urea and remaining Potash split into 3 equal installments at 15, 30, and 45 DAT.",
+          "unit": "kg per bigha (33 decimal); product rates",
+          "sourceIds": ["barc_frg_2024", "bari_cauliflower_guide"]
+        },
+        "compost": {
+          "status": "verified",
+          "value": "Apply 500–600 kg well-rotted cow dung or compost per bigha (12–15 tonnes/ha) at final land preparation.",
+          "unit": "kg per bigha (500–600 kg)",
+          "sourceIds": ["barc_frg_2024", "bari_cauliflower_guide"]
+        }
+      },
+      "sources": [
+        { "id": "barc_frg_2024", "organization": "BARC", "title": "Fertilizer Recommendation Guide 2024", "url": "https://apps.barc.gov.bd/fertilizer_recommendation/" },
+        { "id": "bari_cauliflower_guide", "organization": "BARI", "title": "Cauliflower Cultivation Technology", "url": "http://bari.gov.bd/" }
+      ]
+    },
+    "cabbage": {
+      "nameEn": "Cabbage",
+      "nameBn": "বাঁধাকপি",
+      "fields": {
+        "lifecycle": {
+          "status": "verified",
+          "value": "Duration: 70–95 days after transplanting (BARI Badhakopi-1/Probhati, BARI Badhakopi-2, Green Express, Atlas).",
+          "unit": "days (70–95 days)",
+          "sourceIds": ["bari_cabbage_guide", "barc_frg_2024"]
+        },
+        "timing": {
+          "status": "verified",
+          "value": "Seedbed sowing: September–October (Ashwin); Transplanting 30-day seedlings: October–November (Kartik). Late planting allowed through December.",
+          "sourceIds": ["bari_cabbage_guide", "bamis_cabbage_page"]
+        },
+        "water": {
+          "status": "verified",
+          "value": "Total water requirement: 300–400 mm. Irrigate every 6–8 days. Maintain adequate moisture during head formation; avoid irregular dry-to-wet fluctuations which cause head splitting.",
+          "unit": "mm total (300–400 mm)",
+          "sourceIds": ["bari_cabbage_guide", "bamis_cabbage_page"]
+        },
+        "fertilizer": {
+          "status": "verified",
+          "value": "Per bigha (33 decimal): Urea 26–32 kg, TSP 20–22 kg, MoP 18–20 kg, Gypsum 10–12 kg. Application: 100% TSP, Gypsum and 1/3 Potash basal; Urea and remaining Potash split into 3 equal top-dressings at 15, 30, and 45 days after transplanting.",
+          "unit": "kg per bigha (33 decimal); product rates",
+          "sourceIds": ["barc_frg_2024", "bari_cabbage_guide"]
+        },
+        "compost": {
+          "status": "verified",
+          "value": "Apply 500–600 kg well-decomposed cow dung or compost per bigha (12–15 tonnes/ha) at land preparation.",
+          "unit": "kg per bigha (500–600 kg)",
+          "sourceIds": ["barc_frg_2024", "bari_cabbage_guide"]
+        }
+      },
+      "sources": [
+        { "id": "barc_frg_2024", "organization": "BARC", "title": "Fertilizer Recommendation Guide 2024", "url": "https://apps.barc.gov.bd/fertilizer_recommendation/" },
+        { "id": "bari_cabbage_guide", "organization": "BARI", "title": "Cabbage Cultivation Manual", "url": "http://bari.gov.bd/" }
+      ]
+    },
+    "radish": {
+      "nameEn": "Radish",
+      "nameBn": "মুলা",
+      "fields": {
+        "lifecycle": {
+          "status": "verified",
+          "value": "Duration: 40–55 days (BARI Mula-1/Tashakisan, BARI Mula-2/Pinky, Druti, Minowase). Fast-growing root vegetable.",
+          "unit": "days (40–55 days)",
+          "sourceIds": ["bari_radish_guide", "barc_frg_2024"]
+        },
+        "timing": {
+          "status": "verified",
+          "value": "Early sowing: September (Bhadra–Ashwin); Peak season: October–November (Kartik). Can be grown up to January.",
+          "sourceIds": ["bari_radish_guide", "bamis_radish_page"]
+        },
+        "water": {
+          "status": "verified",
+          "value": "Total water requirement: 150–200 mm. Light, regular irrigation every 6–8 days. Moisture stress followed by heavy watering causes root cracking and bitter pungency.",
+          "unit": "mm total (150–200 mm)",
+          "sourceIds": ["bari_radish_guide", "bamis_radish_page"]
+        },
+        "fertilizer": {
+          "status": "verified",
+          "value": "Per bigha (33 decimal): Urea 18–20 kg, TSP 15–18 kg, MoP 12–15 kg, Gypsum 8–10 kg, Boric Acid 0.8 kg. Application: 100% TSP, Gypsum, Boron, half of Potash and half of Urea basal; remaining Urea and Potash top-dressed at 20–25 DAS.",
+          "unit": "kg per bigha (33 decimal); product rates",
+          "sourceIds": ["barc_frg_2024", "bari_radish_guide"]
+        },
+        "compost": {
+          "status": "verified",
+          "value": "Apply 350–400 kg organic manure or cow dung per bigha (8–10 tonnes/ha) at final ploughing.",
+          "unit": "kg per bigha (350–400 kg)",
+          "sourceIds": ["barc_frg_2024", "bari_radish_guide"]
+        }
+      },
+      "sources": [
+        { "id": "barc_frg_2024", "organization": "BARC", "title": "Fertilizer Recommendation Guide 2024", "url": "https://apps.barc.gov.bd/fertilizer_recommendation/" },
+        { "id": "bari_radish_guide", "organization": "BARI", "title": "Radish Cultivation Technology", "url": "http://bari.gov.bd/" }
+      ]
+    },
+    "carrot": {
+      "nameEn": "Carrot",
+      "nameBn": "গাজর",
+      "fields": {
+        "lifecycle": {
+          "status": "verified",
+          "value": "Duration: 85–100 days (BARI Gazor-1, New Kuroda, Early Nantes). Requires deep, friable sandy loam soil.",
+          "unit": "days (85–100 days)",
+          "sourceIds": ["bari_carrot_guide", "barc_frg_2024"]
+        },
+        "timing": {
+          "status": "verified",
+          "value": "Optimal sowing: Mid-September to November (Ashwin–Kartik). Late sowing allowed until mid-December.",
+          "sourceIds": ["bari_carrot_guide", "bamis_carrot_page"]
+        },
+        "water": {
+          "status": "verified",
+          "value": "Total water requirement: 250–350 mm. Raised beds with light irrigation every 8–10 days. Avoid hard soil crusting during seed emergence by light watering.",
+          "unit": "mm total (250–350 mm)",
+          "sourceIds": ["bari_carrot_guide", "bamis_carrot_page"]
+        },
+        "fertilizer": {
+          "status": "verified",
+          "value": "Per bigha (33 decimal): Urea 20–22 kg, TSP 18–20 kg, MoP 15–18 kg, Gypsum 10–12 kg. Application: 100% TSP, Gypsum and half Potash basal; Urea and remaining Potash split in 2 installments at 25 and 50 DAS.",
+          "unit": "kg per bigha (33 decimal); product rates",
+          "sourceIds": ["barc_frg_2024", "bari_carrot_guide"]
+        },
+        "compost": {
+          "status": "verified",
+          "value": "Apply 400 kg well-rotted fine compost per bigha (10 tonnes/ha). Do not apply fresh unrotted manure as it causes root forking.",
+          "unit": "kg per bigha (400 kg)",
+          "sourceIds": ["barc_frg_2024", "bari_carrot_guide"]
+        }
+      },
+      "sources": [
+        { "id": "barc_frg_2024", "organization": "BARC", "title": "Fertilizer Recommendation Guide 2024", "url": "https://apps.barc.gov.bd/fertilizer_recommendation/" },
+        { "id": "bari_carrot_guide", "organization": "BARI", "title": "Carrot Production Technology", "url": "http://bari.gov.bd/" }
+      ]
+    },
+    "bottle_gourd": {
+      "nameEn": "Bottle Gourd",
+      "nameBn": "লাউ",
+      "fields": {
+        "lifecycle": {
+          "status": "verified",
+          "value": "Duration: 120–140 days (BARI Lau-1, 3, 4, Hybrid Diana, Tia). First harvest starts 55–65 days after sowing and continues for 60–75 days.",
+          "unit": "days (120–140 days)",
+          "sourceIds": ["bari_gourd_guide", "barc_frg_2024"]
+        },
+        "timing": {
+          "status": "verified",
+          "value": "Winter crop (peak): August to October (Bhadra–Kartik); Summer/Rainy crop: February to May (Falgun–Boishakh).",
+          "sourceIds": ["bari_gourd_guide", "bamis_bottle_gourd_page"]
+        },
+        "water": {
+          "status": "verified",
+          "value": "Total water requirement: 400–600 mm. Highly sensitive to water deficit during flowering and fruit elongation. Irrigate pits or furrows every 4–6 days in dry spells. Ensure trellising and prompt drainage of monsoon rain.",
+          "unit": "mm total (400–600 mm); furrow/pit irrigation",
+          "sourceIds": ["bari_gourd_guide", "bamis_bottle_gourd_page"]
+        },
+        "fertilizer": {
+          "status": "verified",
+          "value": "Per bigha (33 decimal): Urea 22–26 kg, TSP 18–20 kg, MoP 15–18 kg, Gypsum 10 kg, Boron 1 kg. Pit application (মাদাপ্রতি): 8–10 kg cow dung, 50 g TSP, 40 g MoP, 25 g Gypsum mixed into pit soil 7 days before planting; Urea (20 g) and MoP (20 g) top-dressed in rings around pit at 20, 40, and 60 DAS.",
+          "unit": "kg per bigha (33 decimal); pit rates",
+          "sourceIds": ["barc_frg_2024", "bari_gourd_guide"]
+        },
+        "compost": {
+          "status": "verified",
+          "value": "Apply 400–500 kg cow dung per bigha (8–10 kg per planting pit).",
+          "unit": "kg per bigha (400–500 kg)",
+          "sourceIds": ["barc_frg_2024", "bari_gourd_guide"]
+        }
+      },
+      "sources": [
+        { "id": "barc_frg_2024", "organization": "BARC", "title": "Fertilizer Recommendation Guide 2024", "url": "https://apps.barc.gov.bd/fertilizer_recommendation/" },
+        { "id": "bari_gourd_guide", "organization": "BARI", "title": "Bottle Gourd Production Handbook", "url": "http://bari.gov.bd/" }
+      ]
+    },
+    "pumpkin": {
+      "nameEn": "Sweet Pumpkin",
+      "nameBn": "মিষ্টি কুমড়া",
+      "fields": {
+        "lifecycle": {
+          "status": "verified",
+          "value": "Duration: 110–130 days (BARI Mistikumra-1, 2, Dream, Supreme). Vines spread 4–6 meters.",
+          "unit": "days (110–130 days)",
+          "sourceIds": ["bari_pumpkin_guide", "barc_frg_2024"]
+        },
+        "timing": {
+          "status": "verified",
+          "value": "Winter sweet pumpkin: October–November (Kartik–Agrahayan); Summer crop: February–March (Falgun). Harvesting: March–May.",
+          "sourceIds": ["bari_pumpkin_guide", "bamis_sweet_pumpkin_page"]
+        },
+        "water": {
+          "status": "verified",
+          "value": "Total water requirement: 350–500 mm. Irrigate along trenches or in pits every 5–7 days in dry season. Avoid overhead sprinkler irrigation that wets leaves to prevent powdery mildew.",
+          "unit": "mm total (350–500 mm); trench/pit watering",
+          "sourceIds": ["bari_pumpkin_guide", "bamis_sweet_pumpkin_page"]
+        },
+        "fertilizer": {
+          "status": "verified",
+          "value": "Per bigha (33 decimal): Urea 20–25 kg, TSP 18–20 kg, MoP 15–18 kg, Gypsum 10 kg, Boron 1 kg. Pit application: 8–10 kg cow dung, 50 g TSP, 40 g MoP basal; Urea 20 g and MoP 20 g top-dressed per pit at vine elongation (25 DAS) and flowering (45 DAS).",
+          "unit": "kg per bigha (33 decimal); pit rates",
+          "sourceIds": ["barc_frg_2024", "bari_pumpkin_guide"]
+        },
+        "compost": {
+          "status": "verified",
+          "value": "Apply 400–500 kg compost per bigha (10 tonnes/ha; 8–10 kg per pit).",
+          "unit": "kg per bigha (400–500 kg)",
+          "sourceIds": ["barc_frg_2024", "bari_pumpkin_guide"]
+        }
+      },
+      "sources": [
+        { "id": "barc_frg_2024", "organization": "BARC", "title": "Fertilizer Recommendation Guide 2024", "url": "https://apps.barc.gov.bd/fertilizer_recommendation/" },
+        { "id": "bari_pumpkin_guide", "organization": "BARI", "title": "Sweet Pumpkin Production Technology", "url": "http://bari.gov.bd/" }
+      ]
+    },
+    "sunflower": {
+      "nameEn": "Sunflower",
+      "nameBn": "সূর্যমুখী",
+      "fields": {
+        "lifecycle": {
+          "status": "verified",
+          "value": "Duration: 90–105 days (BARI Surjomukhi-2, 3, Hysun-33). Highly adaptable oilseed crop for coastal and char lands.",
+          "unit": "days (90–105 days)",
+          "sourceIds": ["bari_sunflower_guide", "barc_frg_2024"]
+        },
+        "timing": {
+          "status": "verified",
+          "value": "Optimal sowing: Mid-November to mid-December (Agrahayan to early Poush). Harvesting: March–April.",
+          "sourceIds": ["bari_sunflower_guide", "bamis_sunflower_page"]
+        },
+        "water": {
+          "status": "verified",
+          "value": "Total water requirement: 250–350 mm. Requires 2–3 irrigations: 1st at vegetative 25–30 DAS, 2nd at flower bud formation 45–50 DAS, 3rd at seed filling 65–70 DAS.",
+          "unit": "mm total (250–350 mm); 2–3 critical stage irrigations",
+          "sourceIds": ["bari_sunflower_guide", "bamis_sunflower_page"]
+        },
+        "fertilizer": {
+          "status": "verified",
+          "value": "Per bigha (33 decimal): Urea 20–24 kg, TSP 16–18 kg, MoP 12–15 kg, Gypsum 12–15 kg (critical for oil synthesis), Zinc Sulphate 1.5 kg, Boric Acid 1.5 kg (vital: prevents empty seeds in head center). Application: 100% TSP, Gypsum, Zinc, Boron and half Urea/Potash basal; remaining Urea and Potash top-dressed before flowering (40–45 DAS).",
+          "unit": "kg per bigha (33 decimal); product rates",
+          "sourceIds": ["barc_frg_2024", "bari_sunflower_guide"]
+        },
+        "compost": {
+          "status": "verified",
+          "value": "Apply 300–400 kg organic manure or cow dung per bigha (7.5–10 tonnes/ha) at land preparation.",
+          "unit": "kg per bigha (300–400 kg)",
+          "sourceIds": ["barc_frg_2024", "bari_sunflower_guide"]
+        }
+      },
+      "sources": [
+        { "id": "barc_frg_2024", "organization": "BARC", "title": "Fertilizer Recommendation Guide 2024", "url": "https://apps.barc.gov.bd/fertilizer_recommendation/" },
+        { "id": "bari_sunflower_guide", "organization": "BARI", "title": "Sunflower Production Guide", "url": "http://bari.gov.bd/" }
+      ]
+    },
+    "ginger": {
+      "nameEn": "Ginger",
+      "nameBn": "আদা",
+      "fields": {
+        "lifecycle": {
+          "status": "verified",
+          "value": "Duration: 240–270 days (8–9 months; BARI Ada-1, 2). Long duration rhizome crop.",
+          "unit": "days (240–270 days)",
+          "sourceIds": ["bari_ginger_guide", "barc_frg_2024"]
+        },
+        "timing": {
+          "status": "verified",
+          "value": "Planting rhizomes: April to May (Chaitra–Boishakh) prior to pre-monsoon showers. Harvesting: December to January (Agrahayan–Poush) when leaves dry and lodge.",
+          "sourceIds": ["bari_ginger_guide", "bamis_ginger_page"]
+        },
+        "water": {
+          "status": "verified",
+          "value": "Total water requirement: 1,200–1,500 mm (monsoon provides most). Raised beds (15–20 cm) with drainage channels are mandatory; stagnant water causes lethal rhizome rot (Pythium). Provide light irrigation in dry pre-monsoon and post-monsoon periods.",
+          "unit": "mm total (1,200–1,500 mm); raised-bed drainage",
+          "sourceIds": ["bari_ginger_guide", "bamis_ginger_page"]
+        },
+        "fertilizer": {
+          "status": "verified",
+          "value": "Per bigha (33 decimal): Urea 30–35 kg, TSP 25–28 kg, MoP 20–25 kg, Gypsum 10–12 kg, Zinc Sulphate 1.5 kg. Application: 100% TSP, Gypsum, Zinc and 1/3 Potash basal; Urea and remaining Potash split into 3 equal top-dressings at 50, 80, and 100 DAP along with earthing-up and fresh straw mulch.",
+          "unit": "kg per bigha (33 decimal); product rates",
+          "sourceIds": ["barc_frg_2024", "bari_ginger_guide"]
+        },
+        "compost": {
+          "status": "verified",
+          "value": "Apply 600–800 kg well-decomposed cow dung or compost per bigha (15–20 tonnes/ha) mixed thoroughly into soil.",
+          "unit": "kg per bigha (600–800 kg)",
+          "sourceIds": ["barc_frg_2024", "bari_ginger_guide"]
+        }
+      },
+      "sources": [
+        { "id": "barc_frg_2024", "organization": "BARC", "title": "Fertilizer Recommendation Guide 2024", "url": "https://apps.barc.gov.bd/fertilizer_recommendation/" },
+        { "id": "bari_ginger_guide", "organization": "BARI", "title": "Ginger Cultivation Technology", "url": "http://bari.gov.bd/" }
+      ]
+    },
+    "papaya": {
+      "nameEn": "Papaya",
+      "nameBn": "পেঁপে",
+      "fields": {
+        "lifecycle": {
+          "status": "verified",
+          "value": "Duration: Semi-perennial (1.5–2 years; Shahi, Red Lady, Green Lady). First fruit harvest starts 7–8 months after transplanting and continues year-round.",
+          "unit": "months (18–24 months total)",
+          "sourceIds": ["bari_papaya_guide", "barc_frg_2024"]
+        },
+        "timing": {
+          "status": "verified",
+          "value": "Seed sowing in nursery: September–October or December–January; Transplanting 45–50 day old seedlings: October–November or February–March.",
+          "sourceIds": ["bari_papaya_guide", "bamis_papaya_page"]
+        },
+        "water": {
+          "status": "verified",
+          "value": "Papaya is extremely sensitive to waterlogging (even 24 hours of standing water causes stem rot and tree death). Must be planted on raised mounds with 50 cm perimeter drainage trenches. Irrigate every 10–12 days during dry winter months.",
+          "unit": "mound drainage; 10–12 day winter intervals",
+          "sourceIds": ["bari_papaya_guide", "bamis_papaya_page"]
+        },
+        "fertilizer": {
+          "status": "verified",
+          "value": "Per plant per year: Urea 450–500 g, TSP 450–500 g, MoP 450–500 g, Gypsum 250 g, Zinc Sulphate 20 g, Boric Acid 20 g. In pit before planting: 100% TSP, Gypsum, Zinc, Boron and 15 kg cow dung; Urea and Potash applied in 6 bi-monthly installments (every 2 months) starting 1 month after transplanting.",
+          "unit": "grams per plant per year",
+          "sourceIds": ["barc_frg_2024", "bari_papaya_guide"]
+        },
+        "compost": {
+          "status": "verified",
+          "value": "Apply 15–20 kg well-rotted cow dung or compost per planting pit mixed with topsoil 15 days before transplanting.",
+          "unit": "kg per pit (15–20 kg)",
+          "sourceIds": ["barc_frg_2024", "bari_papaya_guide"]
+        }
+      },
+      "sources": [
+        { "id": "barc_frg_2024", "organization": "BARC", "title": "Fertilizer Recommendation Guide 2024", "url": "https://apps.barc.gov.bd/fertilizer_recommendation/" },
+        { "id": "bari_papaya_guide", "organization": "BARI", "title": "Papaya Production Handbook", "url": "http://bari.gov.bd/" }
+      ]
+    },
+    "pulses": {
+      "nameEn": "Pulses (Lentil & Mungbean)",
+      "nameBn": "ডাল (মসুর ও মুগ)",
+      "fields": {
+        "lifecycle": {
+          "status": "verified",
+          "value": "Duration: Lentil (মসুর) 105–115 days (BARI Masur-6, 7, 8); Mungbean (মুগ) 60–65 days (BARI Mung-6). Legume crops that fix atmospheric nitrogen in root nodules.",
+          "unit": "days (60–115 days by species)",
+          "sourceIds": ["bari_pulses_guide", "barc_frg_2024"]
+        },
+        "timing": {
+          "status": "verified",
+          "value": "Lentil (Rabi): Mid-October to mid-November (Kartik). Mungbean (Kharif-1): Late February to March; (Kharif-2): August to September.",
+          "sourceIds": ["bari_pulses_guide", "dae_crop_calendar"]
+        },
+        "water": {
+          "status": "verified",
+          "value": "Total water requirement: 150–250 mm. Primarily rainfed on residual soil moisture. For lentil, 1 optional light irrigation at pod initiation (50–55 DAS) if drought occurs. For mungbean, 1 irrigation at 25–30 DAS. Always avoid waterlogging.",
+          "unit": "mm total (150–250 mm)",
+          "sourceIds": ["bari_pulses_guide", "bamis_crop_calendar"]
+        },
+        "fertilizer": {
+          "status": "verified",
+          "value": "Per bigha (33 decimal): Urea 4–6 kg (starter dose only, as root nodules fix nitrogen), TSP 10–12 kg (critical for root growth and nodulation), MoP 5–7 kg, Gypsum 6–8 kg, Boric Acid 1 kg. Apply all fertilizers as basal during final land preparation.",
+          "unit": "kg per bigha (33 decimal); product rates",
+          "sourceIds": ["barc_frg_2024", "bari_pulses_guide"]
+        },
+        "compost": {
+          "status": "verified",
+          "value": "Apply 200–250 kg cow dung or compost per bigha (5–6 tonnes/ha) at land preparation.",
+          "unit": "kg per bigha (200–250 kg)",
+          "sourceIds": ["barc_frg_2024", "bari_pulses_guide"]
+        }
+      },
+      "sources": [
+        { "id": "barc_frg_2024", "organization": "BARC", "title": "Fertilizer Recommendation Guide 2024", "url": "https://apps.barc.gov.bd/fertilizer_recommendation/" },
+        { "id": "bari_pulses_guide", "organization": "BARI", "title": "Pulses Production Manual in Bangladesh", "url": "http://bari.gov.bd/" }
+      ]
+    },
+    "turnip": {
+      "nameEn": "Turnip",
+      "nameBn": "শালগম",
+      "fields": {
+        "lifecycle": {
+          "status": "verified",
+          "value": "Duration: 45–60 days (White Globe, BARI Shalgam-1). Fast-maturing cool season root crop.",
+          "unit": "days (45–60 days)",
+          "sourceIds": ["bari_turnip_guide", "barc_frg_2024"]
+        },
+        "timing": {
+          "status": "verified",
+          "value": "Sowing: September to November (Ashwin–Kartik). Harvesting: November to January.",
+          "sourceIds": ["bari_turnip_guide", "dae_crop_calendar"]
+        },
+        "water": {
+          "status": "verified",
+          "value": "Total water requirement: 150–200 mm. Irrigate every 7–10 days. Maintain uniform moisture to prevent root cracking and bitterness.",
+          "unit": "mm total (150–200 mm)",
+          "sourceIds": ["bari_turnip_guide", "dae_crop_calendar"]
+        },
+        "fertilizer": {
+          "status": "verified",
+          "value": "Per bigha (33 decimal): Urea 16–18 kg, TSP 14–16 kg, MoP 10–12 kg, Gypsum 8 kg. Application: 100% TSP, Gypsum, half Potash and half Urea basal; remaining Urea and Potash top-dressed at 25 DAS.",
+          "unit": "kg per bigha (33 decimal); product rates",
+          "sourceIds": ["barc_frg_2024", "bari_turnip_guide"]
+        },
+        "compost": {
+          "status": "verified",
+          "value": "Apply 350 kg well-decomposed cow dung per bigha (8–10 tonnes/ha).",
+          "unit": "kg per bigha (350 kg)",
+          "sourceIds": ["barc_frg_2024", "dae_krishi_diary"]
+        }
+      },
+      "sources": [
+        { "id": "barc_frg_2024", "organization": "BARC", "title": "Fertilizer Recommendation Guide 2024", "url": "https://apps.barc.gov.bd/fertilizer_recommendation/" },
+        { "id": "bari_turnip_guide", "organization": "BARI", "title": "Root Crops Technology Handbook", "url": "http://bari.gov.bd/" }
+      ]
+    }
+  }
+}
